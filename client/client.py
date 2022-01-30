@@ -15,19 +15,14 @@ class Ui_MainWindow(QMainWindow):
         self.setupUi(self)
         Handler.init()
         self._client = Client(self)
-        #self._init_client()
+        self._message_event = QTimer()
+        self._message_event.timeout.connect(self._request_messages)
+        self._message_event.start(1000)
 
-    
-    def _init_client(self):
-        _signal = self._signal = AppSignals()
-        _signal.logger.connect(self.set_log)
-        th =  safeqthreads.SafeQThread()
-
-        bgWorker = Client(th, _signal)
-        bgWorker.moveToThread(th)
-        th.started.connect(bgWorker.run)
-        th.start() 
-        self._bg_worker = {'worker':bgWorker, 'thread':th} 
+    def _request_messages(self):
+        """ request messages from server """
+        if self._client.Connected:
+            Handler.request_messages(self._client)
 
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
@@ -128,6 +123,7 @@ class Ui_MainWindow(QMainWindow):
     # retranslateUi
     
     def set_log(self, log_text):
+        #self.te_logsbar.setText("") //This line is for show only new messages that the client recieves
         self.te_logsbar.insertPlainText(f"--> {log_text} \n")
 
     def connect(self):
