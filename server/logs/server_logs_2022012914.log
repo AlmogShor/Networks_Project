@@ -1,0 +1,12 @@
+[29-01-2022 14:52:58][INFO] Listening at 127.0.0.1/50000 
+[29-01-2022 14:53:31][INFO] connection request received from ('127.0.0.1', 50001)
+[29-01-2022 14:53:31][INFO] session with ('127.0.0.1', 50001) started
+[29-01-2022 14:54:07][INFO] connection request received from ('127.0.0.1', 50002)
+[29-01-2022 14:54:07][INFO] session with ('127.0.0.1', 50002) started
+[29-01-2022 14:55:20][INFO] requested file [desc.txt] sent to [llot]
+[29-01-2022 14:57:06][EXCEPTION]@run[('127.0.0.1', 50002)] --> [WinError 10054] An existing connection was forcibly closed by the remote host
+[29-01-2022 14:57:06][INFO] available ports -> [50003, 50004, 50005, 50006, 50007, 50008, 50009, 50010, 50011, 50012, 50013, 50014, 50015, 50002]
+[29-01-2022 14:57:06][INFO] session with client [('127.0.0.1', 50002)] ended
+[29-01-2022 14:57:08][EXCEPTION]@run[('127.0.0.1', 50001)] --> [WinError 10054] An existing connection was forcibly closed by the remote host
+[29-01-2022 14:57:08][INFO] available ports -> [50003, 50004, 50005, 50006, 50007, 50008, 50009, 50010, 50011, 50012, 50013, 50014, 50015, 50002, 50001]
+[29-01-2022 14:57:08][INFO] session with client [('127.0.0.1', 50001)] ended
