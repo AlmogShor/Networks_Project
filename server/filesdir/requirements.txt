@@ -1,3 +1,4 @@
+#Old Version. New one is in main folder
 python 3.6.8 or above
 pip install tensorflow==2.2.0
 pip install scipy
