@@ -121,4 +121,3 @@ class Logger():
         """
         if cls.debugMode:
             cls.printlog(f"[ DEBUG ] {message}")
-
