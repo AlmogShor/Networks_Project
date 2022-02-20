@@ -1,4 +1,3 @@
-
 import sys
 from PySide2.QtCore import *
 from PySide2.QtGui import *
@@ -6,8 +5,10 @@ from PySide2.QtWidgets import *
 import safeqthreads
 from utils import Client, Handler, OpCode
 
+
 class AppSignals(QObject):
     logger = Signal(str)
+
 
 class Ui_MainWindow(QMainWindow):
     def __init__(self):
@@ -27,15 +28,15 @@ class Ui_MainWindow(QMainWindow):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(490, 496)
+        MainWindow.resize(750, 700)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.te_logsbar = QTextEdit(self.centralwidget)
         self.te_logsbar.setObjectName(u"te_logsbar")
-        self.te_logsbar.setGeometry(QRect(20, 10, 451, 251))
+        self.te_logsbar.setGeometry(QRect(20, 10, 690, 280))
         self.btn_connect = QPushButton(self.centralwidget)
         self.btn_connect.setObjectName(u"btn_connect")
-        self.btn_connect.setGeometry(QRect(332, 270, 141, 41))
+        self.btn_connect.setGeometry(QRect(332, 290, 261, 41))
         font = QFont()
         font.setPointSize(12)
         font.setBold(True)
@@ -47,11 +48,11 @@ class Ui_MainWindow(QMainWindow):
         self.btn_connect.clicked.connect(self.connect)
         self.label = QLabel(self.centralwidget)
         self.label.setObjectName(u"label")
-        self.label.setGeometry(QRect(20, 270, 141, 31))
+        self.label.setGeometry(QRect(20, 290, 141, 31))
         self.label.setFont(font)
         self.le_usename = QLineEdit(self.centralwidget)
-        self.le_usename.setObjectName(u"le_usename")
-        self.le_usename.setGeometry(QRect(130, 270, 181, 41))
+        self.le_usename.setObjectName(u"le_username")
+        self.le_usename.setGeometry(QRect(180, 290, 181, 41))
         font1 = QFont()
         font1.setPointSize(12)
         self.le_usename.setFont(font1)
@@ -63,17 +64,17 @@ class Ui_MainWindow(QMainWindow):
         self.cmb_menu.addItem("")
         self.cmb_menu.addItem("")
         self.cmb_menu.setObjectName(u"cmb_menu")
-        self.cmb_menu.setGeometry(QRect(130, 330, 341, 61))
+        self.cmb_menu.setGeometry(QRect(130, 355, 341, 61))
         font2 = QFont()
         font2.setPointSize(14)
         self.cmb_menu.setFont(font2)
         self.label_2 = QLabel(self.centralwidget)
         self.label_2.setObjectName(u"label_2")
-        self.label_2.setGeometry(QRect(20, 350, 141, 31))
+        self.label_2.setGeometry(QRect(20, 380, 141, 31))
         self.label_2.setFont(font)
         self.btn_proceed = QPushButton(self.centralwidget)
         self.btn_proceed.setObjectName(u"btn_proceed")
-        self.btn_proceed.setGeometry(QRect(330, 400, 141, 41))
+        self.btn_proceed.setGeometry(QRect(330, 450, 141, 41))
         self.btn_proceed.setFont(font)
         self.btn_proceed.setStyleSheet(u"background-color:rgba(225,225,225,255);")
         self.btn_proceed.setAutoDefault(False)
@@ -81,7 +82,7 @@ class Ui_MainWindow(QMainWindow):
         self.btn_proceed.clicked.connect(self.proceed)
         self.btn_reset = QPushButton(self.centralwidget)
         self.btn_reset.setObjectName(u"btn_reset")
-        self.btn_reset.setGeometry(QRect(130, 400, 141, 41))
+        self.btn_reset.setGeometry(QRect(130, 450, 141, 41))
         self.btn_reset.setFont(font)
         self.btn_reset.setStyleSheet(u"background-color:rgba(225,225,225,255);")
         self.btn_reset.setAutoDefault(False)
@@ -102,8 +103,8 @@ class Ui_MainWindow(QMainWindow):
         self.btn_proceed.setDefault(False)
         self.btn_reset.setDefault(False)
 
-
         QMetaObject.connectSlotsByName(MainWindow)
+
     # setupUi
 
     def retranslateUi(self, MainWindow):
@@ -120,10 +121,11 @@ class Ui_MainWindow(QMainWindow):
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"Menu:", None))
         self.btn_proceed.setText(QCoreApplication.translate("MainWindow", u"Proceed", None))
         self.btn_reset.setText(QCoreApplication.translate("MainWindow", u"Reset", None))
+
     # retranslateUi
-    
+
     def set_log(self, log_text):
-        #self.te_logsbar.setText("") //This line is for show only new messages that the client recieves
+        # self.te_logsbar.setText("") //This line is for show only new messages that the client recieves
         self.te_logsbar.insertPlainText(f"--> {log_text} \n")
 
     def connect(self):
@@ -159,7 +161,7 @@ class Ui_MainWindow(QMainWindow):
             msg_str = f'<msg_lst><{len(messages)}>'
             for msg in messages:
                 msg_str += f'<"{msg}">'
-            
+
             msg_str += '<end>'
             return msg_str
 
@@ -168,7 +170,7 @@ class Ui_MainWindow(QMainWindow):
         if op == OpCode.DL:
             text = self._input_dialog('File to Download', "File Name: ")
             if text:
-                return {"filename":text}
+                return {"filename": text}
 
         elif op == OpCode.CM:
             target_client = None
@@ -182,28 +184,26 @@ class Ui_MainWindow(QMainWindow):
                         break
                 else:
                     break
-            
+
             if target_client:
                 msg_str = self._input_messages()
                 if msg_str:
-                    return {"target_client":target_client, "msg_str":msg_str}
+                    return {"target_client": target_client, "msg_str": msg_str}
 
         elif op == OpCode.ACM:
             msg_str = self._input_messages()
             if msg_str:
-                return {"msg_str":msg_str}
-        
+                return {"msg_str": msg_str}
+
         else:
             return {}
 
-
         return None
-
 
     def proceed(self):
         if self._client.Connected:
-            op  = self.cmb_menu.currentText().split("(")[0]
-            args= self._take_input(op)
+            op = self.cmb_menu.currentText().split("(")[0]
+            args = self._take_input(op)
             if args is not None:
                 result = Handler.handle(op, self._client, args)
                 self.set_log(result)
@@ -215,8 +215,8 @@ class Ui_MainWindow(QMainWindow):
         self.te_logsbar.setText("")
         self.btn_connect.setEnabled(True)
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     app = QApplication(sys.argv)
     main_win = Ui_MainWindow()
     main_win.show()

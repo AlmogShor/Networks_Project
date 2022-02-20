@@ -8,7 +8,7 @@ class Logger():
     logType = ''
     debugMode = False
     printlog = None
-    log_folder = "logs"
+    logfolder = "logs"
 
     @classmethod
     def init(cls, app_name, logType='s', debug_mode=False):
@@ -16,7 +16,7 @@ class Logger():
             @param: app_name    --> name of the application
             @param: logType     s --> standard --> print loges to both terminal and file
                                 f --> file     --> print loges to log file only
-                                t --> terminal --> print loges to terminal only 
+                                t --> terminal --> print loges to terminal only
             @param: debug_mode  --> print debug loges as well if set to True
         '''
         cls.appName = app_name
@@ -37,7 +37,7 @@ class Logger():
 
     @classmethod
     def _print_to_file(cls, message):
-        """ print logs to file 
+        """ print logs to file
             >>> @param:message  -> message to be saved
         """
         try:
@@ -120,3 +120,4 @@ class Logger():
         """
         if cls.debugMode:
             cls.printlog(f"[ DEBUG ] {message}")
+
