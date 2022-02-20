@@ -1,3 +1,3 @@
 # Networks_Project
-by 207900440 208
-This is our final project for networks course
+by 207900440    
+This is my final project for networks course
