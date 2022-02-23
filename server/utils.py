@@ -113,6 +113,7 @@ class Handler():
                 with open(fpath, 'rb') as f:
                     bytes_data = f.read()
 
+                # print(bytes_data) - check what is the value of byte_data - Is it Bytes or something else?
                 return bytes_data, len(bytes_data)
 
             else:
@@ -123,6 +124,8 @@ class Handler():
         file_path = os.path.join(cls._data_folder, filename)
         if os.path.exists(file_path):
             bytes_data, length = read_file(file_path)
+
+            # if bytes_data >64000: - if bytes_data is over the size that Amit said is the limit - so checkout and tell to client its not possible
             if bytes_data:
                 client.send(f'{length}')
                 resp = client.receive()
