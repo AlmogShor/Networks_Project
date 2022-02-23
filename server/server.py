@@ -24,7 +24,7 @@ class Ui_MainWindow(QMainWindow):
         _signal.info.connect(self.set_info)
         th = safeqthreads.SafeQThread()
 
-        bgWorker = Server.init(th, _signal, host="127.0.0.1", port=50000, port_range=range(50001, 50016), ui=self)
+        bgWorker = Server.init(th, _signal, host="127.0.0.1", port=50000, port_range=range(55000, 55015), ui=self)
         bgWorker.moveToThread(th)
         th.started.connect(bgWorker.run)
         th.start()
