@@ -1,14 +1,18 @@
 import unittest
-import server.utils as test_subject
+
+import server.utils
+
+
 
 
 class MyTestCase(unittest.TestCase):
 
     def test_validate_opcode(self):
-        CM = "CM"
-        ans = test_subject.OpCode.validate_opcode(CM)
+        tst_sub = server.utils.OpCode.validate_opcode("CM")
+        # CM = "CM"
+        # ans = test_subject.OpCode.validate_opcode(CM)
         # print(ans)
-        self.assertTrue(ans)
+        self.assertTrue(tst_sub)
 
 
 if __name__ == '__main__':

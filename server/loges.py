@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 
 
-class Logger():
+class Logger:
     """ Module to manage application loges """
     appName = ''
     logType = ''
@@ -120,4 +120,3 @@ class Logger():
         """
         if cls.debugMode:
             cls.printlog(f"[ DEBUG ] {message}")
-

@@ -3,11 +3,11 @@ import os
 import pickle
 from pyexpat.errors import messages
 import socket
-from loges import Logger
+import loges as logs_w
 import safeqthreads
 from threading import Thread
 
-Logger.init("server_logs")
+logs_w.init("server_logs")
 
 
 class OpCode:
@@ -66,7 +66,7 @@ class Handler():
             cls._handlers[opcode](client)
 
         else:
-            Logger.error(f"invalid OpCode [{opcode}] received from [{client._addr}]")
+            logs_w.error(f"invalid OpCode [{opcode}] received from [{client._addr}]")
             client._send(OpCode.RST)
 
     @classmethod
@@ -134,20 +134,20 @@ class Handler():
                     cls._send_over_udp(bytes_data, client.Port + 100)
                     resp = client.receive()
                     if resp == OpCode.ACK:
-                        Logger.info(f"requested file [{filename}] sent to [{user}]")
+                        logs_w.info(f"requested file [{filename}] sent to [{user}]")
 
                     else:
-                        Logger.error(f"client [{user}] failed to receive file [{filename}]")
+                        logs_w.error(f"client [{user}] failed to receive file [{filename}]")
 
                 else:
-                    Logger.info(f"client not ready to receive file [{filename}]")
+                    logs_w.info(f"client not ready to receive file [{filename}]")
 
             else:
-                Logger.error(f'failed to read file [{filename}]')
+                logs_w.error(f'failed to read file [{filename}]')
                 client.send(OpCode.RST)
 
         else:
-            Logger.error("file not found")
+            logs_w.error("file not found")
             client.send(OpCode.RST)
 
     @classmethod
@@ -200,7 +200,7 @@ class Handler():
             >>> @param:client   -> ClientInterface instance, represents to current
                                     connected client
         """
-        Logger.info(f'ending session with {client._addr}')
+        logs_w.info(f'ending session with {client._addr}')
         client.send(OpCode.ACK)
         client.stop()
 
@@ -264,18 +264,18 @@ class ClientInterface(Thread):
             connected with server
         """
 
-        Logger.info(f"session with {self._addr} started")
+        logs_w.info(f"session with {self._addr} started")
         try:
             while self._STOP is False:
                 request = self.receive()
                 Handler.handle(request, self)
 
         except Exception as e:
-            Logger.exception(e, f'run[{self._addr}]')
+            logs_w.exception(e, f'run[{self._addr}]')
 
         finally:
             Server.on_client_disconnected(self._name, self._addr)
-            Logger.info(f"session with client [{self._addr}] ended")
+            logs_w.info(f"session with client [{self._addr}] ended")
 
 
 class Server(safeqthreads.SafeWorker):
@@ -313,7 +313,7 @@ class Server(safeqthreads.SafeWorker):
         self = cls._self
         if name in self._client_handlers.keys():
             cls._self._push_message(name, message)
-            Logger.info(f"message [{message}] scheduled for [{name}]")
+            logs_w.info(f"message [{message}] scheduled for [{name}]")
             return True
 
         else:
@@ -341,7 +341,7 @@ class Server(safeqthreads.SafeWorker):
         """
         self = cls._self
         self._available_ports.append(addr[1])
-        Logger.info(f"available ports -> {self._available_ports}")
+        logs_w.info(f"available ports -> {self._available_ports}")
         self._client_handlers.pop(name, None)
         self.ui_signal.info.emit(f"{len(self.connected_clients())}_{len(self._available_ports)}")
         self.send_to_all(name, f"<user '{name}' has disconnected>")
@@ -383,7 +383,7 @@ class Server(safeqthreads.SafeWorker):
     def _listen(self):
         """ start listening for client requests """
         self.server.listen(self.MAX_NUM_CONN)
-        Logger.info(f"Listening at {self.host}/{self.port} ")
+        logs_w.info(f"Listening at {self.host}/{self.port} ")
         self.ui_signal.logger.emit(f"Listening at {self.host}/{self.port} ")
 
     def _username(self, client):
@@ -425,7 +425,7 @@ class Server(safeqthreads.SafeWorker):
 
         while True:
             client, addr = self.server.accept()
-            Logger.info(f"connection request received from {addr}")
+            logs_w.info(f"connection request received from {addr}")
             self.ui_signal.logger.emit(f"connection request received from {addr}")
             if self._verify_port(addr[1]):
                 client.send(pickle.dumps(OpCode.ACK))
@@ -433,10 +433,10 @@ class Server(safeqthreads.SafeWorker):
                 if name:
                     self._init_client_interface(client, addr, name)
                 else:
-                    Logger.info(f"Connection Refused[{addr}]: username already registered")
+                    logs_w.info(f"Connection Refused[{addr}]: username already registered")
                     self.ui_signal.logger.emit(f"Connection Refused[{addr}]: username already registered")
             else:
-                Logger.error(f'Connection Refused[{addr}]: port [{addr[1]}] already in use')
+                logs_w.error(f'Connection Refused[{addr}]: port [{addr[1]}] already in use')
                 self.ui_signal.logger.emit(f'Connection Refused[{addr}]: port [{addr[1]}] already in use')
                 client.send(pickle.dumps(OpCode.RST))
 
