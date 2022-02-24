@@ -7,6 +7,7 @@ class MyTestCase(unittest.TestCase):
     def test_validate_opcode(self):
         CM = "CM"
         ans = test_subject.OpCode.validate_opcode(CM)
+        # print(ans)
         self.assertTrue(ans)
 
 
