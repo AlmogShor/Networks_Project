@@ -3,8 +3,8 @@ import os
 import pickle
 from pyexpat.errors import messages
 import socket
-import safeqthreads
 from threading import Thread
+from server import safeqthreads
 from server.loges import Logger as logs_w
 
 logs_w.init("server_logs")
