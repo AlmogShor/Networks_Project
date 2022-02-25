@@ -41,10 +41,24 @@ class reno_server:
         # list of time logs for plotting
         self.seq_log, self.ack_log = [], []
 
+    def start_receiver(self):
+        while True:
+            if self.receive() == 'tear_down':
+                self.state = 'tear_down'
+                break
+
     def post_receive(self, pkt, status):
         # called after a data segment is received
         # subclass overwrites this function to implement attacks
         self.send_ack(self.ack)
+
+    def send_ack(self, ack_no):
+        # update ack log
+        packet = scp.IP(src=self.src_ip, dst=self.dst_ip) \
+                 / scp.TCP(sport=self.src_port, dport=self.dst_port,
+                           flags='A', ack=ack_no)
+        scp.send(packet, verbose=0)
+        self.ack_log.append((time.time() - self.base_time, ack_no))
 
     def receive(self):
         if len(self.received_packets) == 0:
@@ -91,16 +105,6 @@ class reno_server:
             else:
                 # duplicate ack
                 self.dupack += 1
-                """
-                [RFC 5681]
-                    On the first and second duplicate ACKs received at a 
-                sender, a TCP SHOULD send a segment of previously unsent data 
-                per [RFC 3042] provided that the receiver's advertised window 
-                allows, the total Flight Size would remain less than or 
-                equal to cwnd plus 2*MSS, and that new data is available 
-                for transmission.  Further, the TCP sender MUST NOT change 
-                cwnd to reflect these two segments [RFC 3042].
-                """
                 if self.dupack < 3:
                     self.send()
                 elif self.dupack == 3:
@@ -115,3 +119,9 @@ class reno_server:
         elif pkt[scp.TCP].flags & 0x1:  # FIN
             self.send_fin()
             return 'tear_down'
+
+    def send_fin(self):
+        packet = scp.IP(src=self.src_ip, dst=self.dst_ip) \
+                 / scp.TCP(sport=self.src_port, dport=self.dst_port,
+                           flags='F')
+        scp.send(packet, verbose=0)

@@ -41,6 +41,29 @@ class reno_server:
         # list of time logs for plotting
         self.seq_log, self.ack_log = [], []
 
+    def start_sender(self):
+        self.xprint("retransmission timeout: %.1fs" % RETRANSMIT_TIMEOUT)
+        last_log_time = 0
+        while True:
+            if self.state == "slow_start" and self.cwnd >= self.ssthresh:
+                self.state = "congestion_avoidance"
+            if self.next_seq - self.seq - 1 < self.cwnd:
+                self.send()
+            if self.receive() == 'tear_down':
+                self.state = 'tear_down'
+                break
+            if self.state != 'fin_sent':
+                self.timeout()
+
+            # send FIN when data sent over pre-specified limit
+            if self.limit and self.seq >= self.limit:
+                if self.state == 'fin_sent' \
+                        and self.retransmission_timer + RETRANSMIT_TIMEOUT < time.time():
+                    continue
+                self.send_fin()
+                self.retransmission_timer = 0
+                self.state = 'fin_sent'
+
     def send(self):
         if self.limit and self.next_seq > self.limit:
             return  # here we should make the stop point for Amit
@@ -49,7 +72,7 @@ class reno_server:
         if self.retransmission_timer is None:
             self.retransmission_timer = time.time()
         Logger.info(f"sequence no.[{self.seq_cnt}] sent to [{self.user_name}]")
-        
+
 
     def send_ack(self, ack_no):
         # update ack log
