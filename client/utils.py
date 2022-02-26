@@ -129,7 +129,7 @@ class Handler():
             else:
                 length = int(resp)
                 client.send(OpCode.SI)
-                bytes_data = cls._receive_over_udp(length, client.Port + 1000)
+                bytes_data = cls._receive_over_udp(length, client.Port + 100)
                 write_file(filename, bytes_data)
                 client.send(OpCode.ACK)
                 Logger.info(f'file [{filename}] downloaded from server')

@@ -10,11 +10,13 @@ RETRANSMIT_TIMEOUT = 4.0  # in seconds final
 
 
 class reno_server:
-    def __init__(self, addr, port, user_name, **kwargs):  # you can add role if it a sender or reciever IRL
+    def __init__(self, user_name, server_ip="127.0.0.1", client_ip="127.0.0.1", server_port=50100, client_port=50101,
+                 **kwargs):
+        # you can add role if it a sender or reciever IRL
         self.seq_cnt = 0
         self.next_seq = 1
         self.ack = 1
-        self.user_name= user_name
+        self.user_name = user_name
         self.received_packets = deque()
         self.outstanding_segments = set()
 
@@ -28,9 +30,10 @@ class reno_server:
         # self.role = role  # sender or receiver IRL
         self.log_cache = None
 
-        self.src_addr = '127.0.0.1'
-        self.dest_addr = addr
-        self.client_port = port
+        self.src_addr = server_ip
+        self.dest_addr = client_ip
+        self.client_port = client_port
+        self.server_port = server_port
 
         self.limit = None
 
@@ -72,7 +75,6 @@ class reno_server:
         if self.retransmission_timer is None:
             self.retransmission_timer = time.time()
         Logger.info(f"sequence no.[{self.seq_cnt}] sent to [{self.user_name}]")
-
 
     def send_ack(self, ack_no):
         # update ack log
