@@ -114,6 +114,7 @@ class Handler():
                     bytes_data = f.read()
 
                 return bytes_data, len(bytes_data)
+            # bytes_data[i:i+1000]
 
             else:
                 return (None, 0)

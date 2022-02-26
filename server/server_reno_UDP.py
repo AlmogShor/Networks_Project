@@ -19,12 +19,12 @@ class reno_server:
         self.received_packets = deque()
         self.outstanding_segments = set()
 
-        self.cwnd = 1 * MSS
+        # self.cwnd = 1 * MSS
         self.ssthresh = 64 * 1024  # 64KB as Amit requests
-        self.dupack = 0
-        self.state = "slow_start"
-        # see [RFC 6298] on how the retransmission timer works
-        self.retransmission_timer = None
+        # self.dupack = 0
+        # self.state = "slow_start"
+        # # see [RFC 6298] on how the retransmission timer works
+        # self.retransmission_timer = None
 
         # self.role = role  # sender or receiver IRL
         self.log_cache = None
