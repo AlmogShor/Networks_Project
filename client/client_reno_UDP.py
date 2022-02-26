@@ -10,7 +10,8 @@ RETRANSMIT_TIMEOUT = 4.0  # in seconds final
 
 
 class reno_server:
-    def __init__(self, user_name, server_ip="127.0.0.1", client_ip="127.0.0.1", server_port=50100, client_port=50101, **kwargs):  # you can add role if it a sender or reciever IRL
+    def __init__(self, user_name, server_ip="127.0.0.1", client_ip="127.0.0.1", server_port=50100, client_port=50101,
+                 **kwargs):  # you can add role if it a sender or reciever IRL
         self.seq_cnt = 0
         self.next_seq = 1
         self.ack = 1
@@ -84,39 +85,6 @@ class reno_server:
             else:
                 status = 'duplicate'
             self.post_receive(pkt, status)
-        # ack received
-        elif pkt[scp.TCP].flags & 0x10:  # ACK
-            if pkt[scp.TCP].ack - 1 > self.seq:
-                # new ack
-                self.seq = pkt[scp.TCP].ack - 1
-                """
-                [RFC 6298]
-                    (5.3) When an ACK is received that acknowledges new data, 
-                restart the retransmission timer so that it will expire after 
-                RTO seconds (for the current value of RTO).
-                """
-                self.retransmission_timer = time.time()  # restart timer
-                if self.state == "slow_start":
-                    self.cwnd += MSS
-                elif self.state == "congestion_avoidance":
-                    self.cwnd += MSS * MSS / self.cwnd
-                elif self.state == "fast_recovery":
-                    self.state = "congestion_avoidance"
-                    self.cwnd = self.ssthresh
-                self.dupack = 0
-            else:
-                # duplicate ack
-                self.dupack += 1
-                if self.dupack < 3:
-                    self.send()
-                elif self.dupack == 3:
-                    self.state = "fast_recovery"
-                    self.ssthresh = self.cwnd / 2
-                    self.cwnd = self.ssthresh + 3 * MSS
-                    # retransmit missing packet
-                    self.resend('triple-ack')
-                elif self.state == "fast_recovery":
-                    self.cwnd += MSS
         # fin received
         elif pkt[scp.TCP].flags & 0x1:  # FIN
             self.send_fin()
