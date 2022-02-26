@@ -34,7 +34,7 @@ class reno_server:
         self.dest_addr = client_ip
         self.client_port = client_port
         self.server_port = server_port
-
+        self.role= 'sender'
         self.limit = None
 
         # stop the sender after seq_no exceeding this limit ***need to do it through the GUI***
@@ -45,12 +45,12 @@ class reno_server:
         self.seq_log, self.ack_log = [], []
 
     def start_sender(self):
-        self.xprint("retransmission timeout: %.1fs" % RETRANSMIT_TIMEOUT)
+        # self.xprint("retransmission timeout: %.1fs" % RETRANSMIT_TIMEOUT)
         last_log_time = 0
         while True:
             if self.state == "slow_start" and self.cwnd >= self.ssthresh:
                 self.state = "congestion_avoidance"
-            if self.next_seq - self.seq - 1 < self.cwnd:
+            if self.next_seq - self.seq_cnt - 1 < self.cwnd:
                 self.send()
             if self.receive() == 'tear_down':
                 self.state = 'tear_down'
@@ -59,7 +59,7 @@ class reno_server:
                 self.timeout()
 
             # send FIN when data sent over pre-specified limit
-            if self.limit and self.seq >= self.limit:
+            if self.limit and self.seq_cnt >= self.limit:
                 if self.state == 'fin_sent' \
                         and self.retransmission_timer + RETRANSMIT_TIMEOUT < time.time():
                     continue
@@ -78,8 +78,8 @@ class reno_server:
 
     def send_ack(self, ack_no):
         # update ack log
-        packet = scp.IP(src=self.src_ip, dst=self.dst_ip) \
-                 / scp.TCP(sport=self.src_port, dport=self.dst_port,
+        packet = scp.IP(src=self.src_addr, dst=self.dest_addr) \
+                 / scp.TCP(sport=self.server_port, dport=self.client_port,
                            flags='A', ack=ack_no)
         scp.send(packet, verbose=0)
         self.ack_log.append((time.time() - self.base_time, ack_no))
@@ -94,3 +94,76 @@ class reno_server:
             self.ssthresh = self.cwnd / 2
             self.cwnd = 1 * MSS
             self.dupack = 0
+
+    def receive(self):
+        if len(self.received_packets) == 0:
+            return
+        pkt = self.received_packets.popleft()[0]
+
+        # data packet received
+        if pkt[scp.TCP].flags == 0:
+            # update seq log
+            self.seq_log.append((time.time() - self.base_time, pkt[scp.TCP].seq))
+            if pkt[scp.TCP].seq == self.ack:
+                status = 'new'
+                self.ack += MSS
+                while self.ack in self.outstanding_segments:
+                    self.outstanding_segments.remove(self.ack)
+                    self.ack += MSS
+            elif pkt[scp.TCP].seq > self.ack:
+                # a future packet (queue it)
+                status = 'future'
+                self.outstanding_segments.add(pkt[scp.TCP].seq)
+            else:
+                status = 'duplicate'
+            self.post_receive(pkt, status)
+        # ack received
+        elif pkt[scp.TCP].flags & 0x10:  # ACK
+            if pkt[scp.TCP].ack - 1 > self.seq:
+                # new ack
+                self.seq = pkt[scp.TCP].ack - 1
+                """
+                [RFC 6298]
+                    (5.3) When an ACK is received that acknowledges new data, 
+                restart the retransmission timer so that it will expire after 
+                RTO seconds (for the current value of RTO).
+                """
+                self.retransmission_timer = time.time()  # restart timer
+                if self.state == "slow_start":
+                    self.cwnd += MSS
+                elif self.state == "congestion_avoidance":
+                    self.cwnd += MSS * MSS / self.cwnd
+                elif self.state == "fast_recovery":
+                    self.state = "congestion_avoidance"
+                    self.cwnd = self.ssthresh
+                self.dupack = 0
+            else:
+                # duplicate ack
+                self.dupack += 1
+                """
+                [RFC 5681]
+                    On the first and second duplicate ACKs received at a 
+                sender, a TCP SHOULD send a segment of previously unsent data 
+                per [RFC 3042] provided that the receiver's advertised window 
+                allows, the total Flight Size would remain less than or 
+                equal to cwnd plus 2*SMSS, and that new data is available 
+                for transmission.  Further, the TCP sender MUST NOT change 
+                cwnd to reflect these two segments [RFC 3042].
+                """
+                if self.dupack < 3:
+                    self.send()
+                elif self.dupack == 3:
+                    self.state = "fast_recovery"
+                    self.ssthresh = self.cwnd / 2
+                    self.cwnd = self.ssthresh + 3 * MSS
+                    # retransmit missing packet
+                    self.resend('triple-ack')
+                elif self.state == "fast_recovery":
+                    self.cwnd += MSS
+        # fin received
+        elif pkt[scp.TCP].flags & 0x1:  # FIN
+            if self.role == 'sender' and self.state == 'fin_sent':
+                return 'tear_down'
+            if self.role == 'receiver':
+                self.send_fin()
+                return 'tear_down'
