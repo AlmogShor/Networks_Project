@@ -34,7 +34,7 @@ class reno_server:
         self.dest_addr = client_ip
         self.client_port = client_port
         self.server_port = server_port
-        self.role= 'sender'
+        self.role = 'sender'
         self.limit = None
 
         # stop the sender after seq_no exceeding this limit ***need to do it through the GUI***
@@ -70,11 +70,23 @@ class reno_server:
     def send(self):
         if self.limit and self.next_seq > self.limit:
             return  # here we should make the stop point for Amit
-
+        packet = scp.IP(src=self.src_addr, dst=self.dest_addr) \
+                 / scp.TCP(sport=self.server_port, dport=self.client_port,
+                           flags='', seq=self.next_seq) \
+                 / (DUMMY_PAYLOAD)
+        scp.send(packet,verbose=0)
         self.next_seq += MSS
         if self.retransmission_timer is None:
             self.retransmission_timer = time.time()
         Logger.info(f"sequence no.[{self.seq_cnt}] sent to [{self.user_name}]")
+
+    def resend(self, event):
+        packet = scp.IP(src=self.src_addr, dst=self.dest_addr) \
+                 / scp.TCP(sport=self.server_port, dport=self.client_port,
+                           flags='', seq=self.seq + 1) \
+                 / (DUMMY_PAYLOAD)
+        self.retransmission_timer = time.time()
+        scp.send(packet, verbose=0)
 
     def send_ack(self, ack_no):
         # update ack log
@@ -141,7 +153,6 @@ class reno_server:
                 # duplicate ack
                 self.dupack += 1
                 """
-                [RFC 5681]
                     On the first and second duplicate ACKs received at a 
                 sender, a TCP SHOULD send a segment of previously unsent data 
                 per [RFC 3042] provided that the receiver's advertised window 

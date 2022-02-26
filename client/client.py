@@ -169,7 +169,7 @@ class Ui_MainWindow(QMainWindow):
         """ take input from user for opcodes, where needed"""
         if op == OpCode.DL:
             text = self._input_dialog('File to Download', "File Name: ")
-            stop_point = self._input_dialog("point to stop", "Enter a check point:\n (between 0-1) ")
+            # stop_point = self._input_dialog("point to stop", "Enter a check point:\n (between 0-1) ")
             if text:
                 return {"filename": text}
 
