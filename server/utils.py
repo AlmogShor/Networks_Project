@@ -407,7 +407,7 @@ class Server(safeqthreads.SafeWorker):
     def _listen(self):
         """ start listening for client requests """
         self.server.listen(self.MAX_NUM_CONN)
-        Logger.info(f"Listening at {self.host}/{self.port} ")
+        Logger.info(f"Listening at {self.ip}/{self.port} ")
         self.ui_signal.logger.emit(f"Listening at {self.ip}/{self.port} ")
         # self.ui_signal.logger.emit(f"my ip is {self.ip}")
 
