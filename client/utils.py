@@ -261,7 +261,7 @@ class Client():
 
                 try:
                     self._client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self._client.bind(("127.0.0.1", p))
+                    self._client.bind((serverip, p))
                     self._client.connect((serverip, port))
                     self._port = p
                 except Exception as e:

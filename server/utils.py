@@ -1,6 +1,7 @@
 from email.mime import message
 import os
 import pickle
+import math
 from pyexpat.errors import messages
 import socket
 from loges import Logger
@@ -112,9 +113,32 @@ class Handler():
             if os.path.exists(fpath):
                 with open(fpath, 'rb') as f:
                     bytes_data = f.read()
+                    # size_file = os.path.getsize('./serversFiles/' + file_name)
+                    # sum_of_packets = math.ceil(size_file / 2043)
+                    # half = sum_of_packets / 2 + 1
+                    # index = 1
+                    # file = open('./serversFiles/' + file_name, 'rb')
+                    # # saving the first half of the file to a dict that send it immediately
+                    # while index <= half:
+                    #     txt = self.int_to_string(index).encode()
+                    #     txt += file.read(2043)
+                    #     self.curr_download[index] = txt
+                    #     index += 1
+                    # # saving the second half of the file to a dict that sends it when proceed is required
+                    # if not self.second_download.get(file_name):
+                    #     dict_sec = {}
+                    #     while index <= sum_of_packets:
+                    #         txt = self.int_to_string(index).encode()
+                    #         txt += file.read(2043)
+                    #         dict_sec[index] = txt
+                    #         index += 1
+                    #     self.second_download[file_name] = dict_sec
+                    #
+                    # file.close()
+                    # message = f'<start_download><{file_name}>'
 
                 return bytes_data, len(bytes_data)
-            # bytes_data[i:i+1000]
+
 
             else:
                 return (None, 0)
@@ -361,7 +385,9 @@ class Server(safeqthreads.SafeWorker):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._client_handlers = {}
         self._available_ports = [p for p in port_range]
+        self.ip = socket.gethostbyname(socket.gethostname())
         self._ui = ui
+        self.curr_download = {}
         self.ui_thread = thread
         self.ui_signal = signal
         self._message_queue = {}
@@ -382,7 +408,8 @@ class Server(safeqthreads.SafeWorker):
         """ start listening for client requests """
         self.server.listen(self.MAX_NUM_CONN)
         Logger.info(f"Listening at {self.host}/{self.port} ")
-        self.ui_signal.logger.emit(f"Listening at {self.host}/{self.port} ")
+        self.ui_signal.logger.emit(f"Listening at {self.ip}/{self.port} ")
+        # self.ui_signal.logger.emit(f"my ip is {self.ip}")
 
     def _username(self, client):
         """ receive and validate username from client"""
@@ -448,4 +475,4 @@ class Server(safeqthreads.SafeWorker):
 # main execution
 if __name__ == '__main__':
     Handler.init()
-    Server.init(host="127.0.0.1", port=50000, port_range=range(50001, 50016))
+    Server.init(port=50000, port_range=range(50001, 50016))

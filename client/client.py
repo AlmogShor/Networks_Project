@@ -138,7 +138,8 @@ class Ui_MainWindow(QMainWindow):
 
         else:
             self.set_log(message)
-
+    def connect_to_specific_ip(self):
+        pass
     def _input_dialog(self, header, input_name):
         text, ok = QInputDialog().getText(self, header, input_name, QLineEdit.Normal)
         if text and ok:
