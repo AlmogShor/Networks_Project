@@ -1,13 +1,7 @@
 import socket
 import time
+from collections import deque
 
-
-def getClocks(num_of_clocks):
-    clocks = [time.clock()]*num_of_clocks
-    for(c in clocks){
-        c.
-    }
-    return clocks
 
 class selective_repeat:
     @classmethod
@@ -17,7 +11,51 @@ class selective_repeat:
         self.seq = 0
         self.curr_download = 0
         self.nextpckt = 1
-        self.timeout_clockes = getClocks(4);
+        self.timeout_clockes = [0]*SL_WINDOW_SIZE
+        self.timeout = 4
+        self.window_size = 6
+
+    def selective_repeat(self, something_to_send): # todo decide about parameters
+        """
+        sending the file in selective-repeat reno combination
+        :param something_to_send: a file to send
+        :return:
+        """
+
+
+        # make a queue of packets,
+        # list of time-stemps
+        packets_number = ?
+        time_stemps = [0]*packets_number
+        packets_queue = deque(range(min(packets_number,self.window_size)))
+        # self.nextpckt = len(deque)
+        (3,...,15,27,1)
+
+        while (state != finished)
+        # sending first-half
+        acked = [False]*packets_number
+        for i in range(packets_number):
+            self.send_packet(i)
+            time_stemps[i] = time.clock()
+
+        # send
+        while packets_queue:
+            i = packets_queue.pop()
+            if acked[i]:
+                continue
+            if abs(time.clock() - time_stemps[i]) > self.timeout:
+                # todo checkv units of time
+                self.send_packet(i)
+                time_stemps[i] = time.clock()
+            packets_queue.append(i)
+
+
+
+
+
+
+
+
 
     def selective_repeat_server(self, address, port):
         address_server = (address, port)
