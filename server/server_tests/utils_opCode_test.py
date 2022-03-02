@@ -1,14 +1,12 @@
 import unittest
-
-import server.utils
-
+from server import utils as test_subject
 
 
 
 class MyTestCase(unittest.TestCase):
 
     def test_validate_opcode(self):
-        tst_sub = server.utils.OpCode.validate_opcode("CM")
+        tst_sub = test_subject.OpCode.validate_opcode("CM")
         # CM = "CM"
         # ans = test_subject.OpCode.validate_opcode(CM)
         # print(ans)

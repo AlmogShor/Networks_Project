@@ -7,7 +7,8 @@ import socket
 from loges import Logger
 import safeqthreads
 from threading import Thread
-import selective_repeat_server as udp_file_transfer
+# import selective_repeat_server as udp_file_transfer
+from selective_repeat_server import *
 
 Logger.init("server_logs")
 
@@ -131,22 +132,25 @@ class Handler:
                 f.close()
                 # message = f'<start_download><{file_name}>'
 
-            return curr_download, size_of_file
-
+                return curr_download, size_of_file,len(bytes_data)
             else:
-            return (None, 0)
+                return (None, 0)
+
+
+
 
         client.send(OpCode.SI)
         filename = client.receive()
         file_path = os.path.join(cls._data_folder, filename)
         if os.path.exists(file_path):
-            bytes_data_dict, size_of_file = read_file(file_path)
+            bytes_data_dict, size_of_file, length = read_file(file_path)
             if bytes_data_dict:
                 client.send(f'{length}')
                 resp = client.receive()
                 if resp == OpCode.SI:
                     user = client.ClientName
-                    udp_file_transfer(Server._self.host, client.Port + 100,bytes_data_dict,size_of_file)
+                    selective_repeat(Server._self.host, client.Port + 100,bytes_data_dict,size_of_file)
+
                     # cls._send_over_udp(bytes_data, client.Port + 100)
                     resp = client.receive()
                     if resp == OpCode.ACK:

@@ -12,6 +12,7 @@ class selective_repeat:
         self.seq = 0
         self.curr_download = {}
         self.nextpckt = 1
+        self.expct_ack = {}
         self.window_size = 6
         self.timeout_clockes = [0] * SL_WINDOW_SIZE
         self.timeout = 4
@@ -27,7 +28,7 @@ class selective_repeat:
 
     def _which_part_are_we(self, something_to_send):
         if something_to_send == 'first_part':
-            return Math.ceil(self.sum_of_packets / 2 + 1
+            return math.ceil(self.sum_of_packets / 2 + 1)
         else:
             return self.sum_of_packets / 2
 
@@ -39,30 +40,34 @@ class selective_repeat:
         """
 
         # make a queue of packets,
-        # list of time-stemps
+        # list of time-stamps
         packets_number = self._which_part_are_we(something_to_send)
-        time_stemps = [0] * packets_number
+        time_stamps = [0] * packets_number
         packets_queue = deque(range(min(packets_number, self.window_size)))
         # self.nextpckt = len(deque)
-
-        # sending first-half
         acked = [False] * packets_number
         for i in range(packets_number):
             self.send_packet(i)
-            time_stemps[i] = time.clock()
+            time_stamps[i] = time.clock()
 
         # send
         while packets_queue:
             i = packets_queue.pop()
             if acked[i]:
                 continue
-            if abs(time.clock() - time_stemps[i]) > self.timeout:
+            if abs(time.clock() - time_stamps[i]) > self.timeout:
                 # todo checkv units of time
                 self.send_packet(i)
-                time_stemps[i] = time.clock()
+                time_stamps[i] = time.clock()
             packets_queue.append(i)
 
+    def send_packet(self, idx):
+        if len(self.expct_ack)<self.window_size and self.curr_download.get(self.nextpckt) is not None:
+            self.udp_server_sock.sendto(self.curr_download[self.nextpckt], address)
+            self.expct_ack.append(self.nextpckt)
+
     def selective_repeat_server(self):
+
         udp_server_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_server_sock.bind(self.addr, self.port)
         # packet limit sending everytime
@@ -75,36 +80,36 @@ class selective_repeat:
                 try:
                     data, address = udp_server_sock.recvfrom(2048)
                     is_connected = True
-                except timeout:
+                except:
                     pass
             # somebody is connected
             else:
-                while len(self.exp_ack) < packet_limit and self.curr_download.get(self.nextpckt) is not None:
+                while len(self.expct_ack) < packet_limit and self.curr_download.get(self.nextpckt) is not None:
                     udp_server_sock.sendto(self.curr_download[self.nextpckt], address)
-                    self.exp_ack.append(self.nextpckt)
+                    self.expct_ack.append(self.nextpckt)
                     self.nextpckt += 1
                 try:
-                    print(self.exp_ack)
+                    print(self.expct_ack)
                     # getting the number of the packet from the client(ack) and removing from the dict
                     data, address = self.udp_server_sock.recvfrom(5)
                     print(int(data.decode()))
-                    if self.exp_ack.index(int(data.decode())) is None:
+                    if self.expct_ack.index(int(data.decode())) is None:
                         continue
-                    ack_idx = self.exp_ack.index(int(data.decode()))
-                    for packet_num in self.exp_ack:
+                    ack_idx = self.expct_ack.index(int(data.decode()))
+                    for packet_num in self.expct_ack:
                         if packet_num == int(data.decode()):
-                            # self.exp_ack.pop(0)
+                            # self.expct_ack.pop(0)
                             self.download_now.pop(packet_num)
                             break
                         udp_server_sock.sendto(self.curr_download[packet_num], address)
-                        self.exp_ack.append(packet_num)
-                        # self.exp_ack.pop(0)
+                        self.expct_ack.append(packet_num)
+                        # self.expct_ack.pop(0)
                     while ack_idx > -1:
-                        self.exp_ack.pop(0)
+                        self.expct_ack.pop(0)
                         ack_idx -= 1
                     # data = number of packet
-                except timeout:
-                    for packet_num in self.exp_ack:
+                except:
+                    for packet_num in self.expct_ack:
                         udp_server_sock.sendto(self.download_now[packet_num], address)
 
                 # # how many packets we sent
@@ -137,5 +142,5 @@ class selective_repeat:
                         if data.decode() == 'finally':
                             self.can_download = True
                             break
-                    except timeout:
+                    except:
                         pass
