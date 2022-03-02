@@ -7,6 +7,7 @@ import socket
 from loges import Logger
 import safeqthreads
 from threading import Thread
+import selective_repeat_server
 
 Logger.init("server_logs")
 
@@ -39,7 +40,7 @@ class OpCode:
         return True if opcode in cls._opcodes else False
 
 
-class Handler():
+class Handler:
     """ Interface to handle current connected client"""
     _data_folder = "./filesdir"
 
@@ -98,7 +99,6 @@ class Handler():
         udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_sock.sendto(bytes_data, ("127.0.0.1", port))
         udp_sock.close()
-
 
     @classmethod
     def selective_repeat_server(self, address, port):
@@ -192,34 +192,31 @@ class Handler():
                 >>> @param:fpath    -> file path
             """
             if os.path.exists(fpath):
+                size_of_file = os.path.getsize(fpath)
+                sum_of_packets = math.ceil(size_of_file / 2043)
+                half = sum_of_packets / 2 + 1
+                index = 1
                 with open(fpath, 'rb') as f:
-                    bytes_data = f.read()
-                    # size_file = os.path.getsize('./serversFiles/' + file_name)
-                    # sum_of_packets = math.ceil(size_file / 2043)
-                    # half = sum_of_packets / 2 + 1
-                    # index = 1
-                    # file = open('./serversFiles/' + file_name, 'rb')
-                    # # saving the first half of the file to a dict that send it immediately
-                    # while index <= half:
-                    #     txt = self.int_to_string(index).encode()
-                    #     txt += file.read(2043)
-                    #     self.curr_download[index] = txt
-                    #     index += 1
-                    # # saving the second half of the file to a dict that sends it when proceed is required
-                    # if not self.second_download.get(file_name):
-                    #     dict_sec = {}
-                    #     while index <= sum_of_packets:
-                    #         txt = self.int_to_string(index).encode()
-                    #         txt += file.read(2043)
-                    #         dict_sec[index] = txt
-                    #         index += 1
-                    #     self.second_download[file_name] = dict_sec
-                    #
-                    # file.close()
-                    # message = f'<start_download><{file_name}>'
+                # saving the first half of the file to a dict that send it immediately
+                while index <= sum_of_packets:
+                    bytes_data = self.int_to_string(index).encode()
+                    bytes_data += f.read(2043)
+                    self.curr_download[index] = bytes_data
+                #     index += 1
+                # # saving the second half of the file to a dict that sends it when proceed is required
+                # if not self.second_download.get(fpath):
+                #     dict_sec = {}
+                #     while index <= sum_of_packets:
+                #         bytes_data = self.int_to_string(index).encode()
+                #         bytes_data += file.read(2043)
+                #         dict_sec[index] = bytes_data
+                #         index += 1
+                #     self.second_download[file_name] = dict_sec
+                #
+                f.close()
+                # message = f'<start_download><{file_name}>'
 
-                return bytes_data, len(bytes_data)
-
+            return bytes_data, len(bytes_data)
 
             else:
                 return (None, 0)
@@ -228,6 +225,7 @@ class Handler():
         filename = client.receive()
         file_path = os.path.join(cls._data_folder, filename)
         if os.path.exists(file_path):
+            selective_repeat_server(self.ip, client.port + 100)
             bytes_data, length = read_file(file_path)
             if bytes_data:
                 client.send(f'{length}')
@@ -253,59 +251,63 @@ class Handler():
             Logger.error("file not found")
             client.send(OpCode.RST)
 
-    @classmethod
-    def handle_cm(cls, client):
-        """ handle CM request from client
-            >>> @param:client   -> ClientInterface instance, represents to current
-                                    connected client
-        """
-        client.send(OpCode.SI)
-        target_client = client.receive()
-        client.send(OpCode.SI)
-        msgs = client.receive()
-        if Server.send(target_client, msgs):
-            client.send(OpCode.ACK)
 
-        else:
-            client.send(OpCode.RST)
-
-    @classmethod
-    def handle_acm(cls, client):
-        """ handle ACM request by the user
-            >>> @param:client   -> ClientInterface instance, represents to current
-                                    connected client
-        """
-        client.send(OpCode.SI)
-        msgs = client.receive()
-        if Server.send_to_all(client.ClientName, msgs):
-            client.send(OpCode.ACK)
-
-        else:
-            client.send(OpCode.RST)
-
-    @classmethod
-    def handle_ccn(cls, client):
-        """ handle CCN request by client
-            >>> @param:client   -> ClientInterface instance, represents to current
-                                    connected client
-        """
-        clients = Server.connected_clients()
-        clients.remove(client.ClientName)
-        clients_str = f'<users_lst><{len(clients)}>'
-        for cl in clients:
-            clients_str += f'<"{cl}">'
-        clients_str += '<end>'
-        client.send(clients_str)
-
-    @classmethod
-    def handle_fin(cls, client):
-        """ handle finish request by the client
-            >>> @param:client   -> ClientInterface instance, represents to current
-                                    connected client
-        """
-        Logger.info(f'ending session with {client._addr}')
+@classmethod
+def handle_cm(cls, client):
+    """ handle CM request from client
+        >>> @param:client   -> ClientInterface instance, represents to current
+                                connected client
+    """
+    client.send(OpCode.SI)
+    target_client = client.receive()
+    client.send(OpCode.SI)
+    msgs = client.receive()
+    if Server.send(target_client, msgs):
         client.send(OpCode.ACK)
-        client.stop()
+
+    else:
+        client.send(OpCode.RST)
+
+
+@classmethod
+def handle_acm(cls, client):
+    """ handle ACM request by the user
+        >>> @param:client   -> ClientInterface instance, represents to current
+                                connected client
+    """
+    client.send(OpCode.SI)
+    msgs = client.receive()
+    if Server.send_to_all(client.ClientName, msgs):
+        client.send(OpCode.ACK)
+
+    else:
+        client.send(OpCode.RST)
+
+
+@classmethod
+def handle_ccn(cls, client):
+    """ handle CCN request by client
+        >>> @param:client   -> ClientInterface instance, represents to current
+                                connected client
+    """
+    clients = Server.connected_clients()
+    clients.remove(client.ClientName)
+    clients_str = f'<users_lst><{len(clients)}>'
+    for cl in clients:
+        clients_str += f'<"{cl}">'
+    clients_str += '<end>'
+    client.send(clients_str)
+
+
+@classmethod
+def handle_fin(cls, client):
+    """ handle finish request by the client
+        >>> @param:client   -> ClientInterface instance, represents to current
+                                connected client
+    """
+    Logger.info(f'ending session with {client._addr}')
+    client.send(OpCode.ACK)
+    client.stop()
 
 
 class ClientInterface(Thread):
