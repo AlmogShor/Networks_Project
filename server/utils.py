@@ -219,7 +219,7 @@ class Handler:
             return bytes_data, len(bytes_data)
 
             else:
-                return (None, 0)
+            return (None, 0)
 
         client.send(OpCode.SI)
         filename = client.receive()

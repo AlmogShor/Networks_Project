@@ -19,10 +19,9 @@ class selective_repeat:
         self.nextpckt = 1
         self.timeout_clockes = getClocks(4);
 
-    def selective_repeat_server(self, address, port):
-        address_server = (address, port)
+    def selective_repeat_server(self):
         udp_server_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_server_sock.bind(address_server)
+        udp_server_sock.bind(self.addr,self.port)
         # packet limit sending everytime
         packet_limit = 4
         # checking if somebody is connected to the udp
