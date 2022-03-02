@@ -1,39 +1,52 @@
 import socket
 import time
 from collections import deque
+import math
 
 
 class selective_repeat:
     @classmethod
-    def __init__(self,addr,port):
-        self.addr=addr
-        self.port=port
+    def __init__(self, addr, port, file, size_of_file):
+        self.addr = addr
+        self.port = port
         self.seq = 0
-        self.curr_download = 0
+        self.curr_download = {}
         self.nextpckt = 1
-        self.timeout_clockes = [0]*SL_WINDOW_SIZE
-        self.timeout = 4
         self.window_size = 6
+        self.timeout_clockes = [0] * SL_WINDOW_SIZE
+        self.timeout = 4
+        self.file = file
+        self.size_of_file = size_of_file
+        self.sum_of_packets = math.ceil(self.size_of_file / 2022)
+        self.udp_server_socket = None
+        self._init_socket()
 
-    def selective_repeat(self, something_to_send): # todo decide about parameters
+    def _init_socket(self):
+        self.udp_server_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_server_sock.bind(self.addr, self.port)
+
+    def _which_part_are_we(self, something_to_send):
+        if something_to_send == 'first_part':
+            return Math.ceil(self.sum_of_packets / 2 + 1
+        else:
+            return self.sum_of_packets / 2
+
+    def selective_repeat(self, something_to_send):  # todo decide about parameters
         """
         sending the file in selective-repeat reno combination
-        :param something_to_send: a file to send
+        :param something_to_send: which part of the file to send
         :return:
         """
 
-
         # make a queue of packets,
         # list of time-stemps
-        packets_number = ?
-        time_stemps = [0]*packets_number
-        packets_queue = deque(range(min(packets_number,self.window_size)))
+        packets_number = self._which_part_are_we(something_to_send)
+        time_stemps = [0] * packets_number
+        packets_queue = deque(range(min(packets_number, self.window_size)))
         # self.nextpckt = len(deque)
-        (3,...,15,27,1)
 
-        while (state != finished)
         # sending first-half
-        acked = [False]*packets_number
+        acked = [False] * packets_number
         for i in range(packets_number):
             self.send_packet(i)
             time_stemps[i] = time.clock()
@@ -49,17 +62,9 @@ class selective_repeat:
                 time_stemps[i] = time.clock()
             packets_queue.append(i)
 
-
-
-
-
-
-
-
-
     def selective_repeat_server(self):
         udp_server_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_server_sock.bind(self.addr,self.port)
+        udp_server_sock.bind(self.addr, self.port)
         # packet limit sending everytime
         packet_limit = 4
         # checking if somebody is connected to the udp
@@ -81,7 +86,7 @@ class selective_repeat:
                 try:
                     print(self.exp_ack)
                     # getting the number of the packet from the client(ack) and removing from the dict
-                    data, address = udp_server_sock.recvfrom(5)
+                    data, address = self.udp_server_sock.recvfrom(5)
                     print(int(data.decode()))
                     if self.exp_ack.index(int(data.decode())) is None:
                         continue
@@ -91,7 +96,7 @@ class selective_repeat:
                             # self.exp_ack.pop(0)
                             self.download_now.pop(packet_num)
                             break
-                        udp_server_sock.sendto(self.download_now[packet_num], address)
+                        udp_server_sock.sendto(self.curr_download[packet_num], address)
                         self.exp_ack.append(packet_num)
                         # self.exp_ack.pop(0)
                     while ack_idx > -1:
@@ -129,7 +134,7 @@ class selective_repeat:
                     try:
                         udp_server_sock.sendto("Done!".encode(), address)
                         data, address = udp_server_sock.recvfrom(5)
-                        if data.decode() == 'sabab':
+                        if data.decode() == 'finally':
                             self.can_download = True
                             break
                     except timeout:

@@ -120,7 +120,7 @@ class Handler():
             if message.decode() == 'Done!':
                 udp_client.settimeout(5)
                 try:
-                    udp_client.sendto('sabab'.encode(), (serverip, port))
+                    udp_client.sendto('finally'.encode(), (serverip, port))
                     message, address = udp_client.recvfrom(2048)
                 except timeout:
                     break
@@ -128,7 +128,7 @@ class Handler():
             else:
                 index = message[:5]
                 # sending the index of the packet that received(ack)
-                udp_client.sendto(index, (self.se, self.port_udp))
+                udp_client.sendto(index, (self.se, self.port_server))
                 packet = message[5:]
                 # saving the file into the dict
                 self.file[int(index.decode())] = packet
