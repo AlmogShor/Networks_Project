@@ -369,6 +369,8 @@ class Client:
             data = self._client.recv(bytes_len)
             data_str = pickle.loads(data) if deserialize else data
 
+        if msg == "complete_half_file":
+            self.ui.popup()
         return data_str
 
     def close(self):

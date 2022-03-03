@@ -64,6 +64,13 @@ class Handler:
         pass
 
     @classmethod
+    def ask_client_to_proceed(cls, client):
+        client.send(f'{"complete_half_file"}')
+        resp = client.receive()
+        return resp
+
+
+    @classmethod
     def handle(cls, opcode, client):
         """ base function to handle client's request and pass control to respective handler
             >>> @param:opcode   -> opcode sent by client
@@ -116,49 +123,63 @@ class Handler:
         def read_file(fpath):
             """ read file content from active server's directory
                 >>> @param:fpath    -> file path
+                return 2 dictioneries , each containg half of the file
             """
             if os.path.exists(fpath):
                 size_of_file = os.path.getsize(fpath)
-                curr_download = {}
+                curr_download1 = {}
+                curr_download2 = {}
                 sum_of_packets = math.ceil(size_of_file / 2022)
                 half = sum_of_packets / 2 + 1
                 index = 1
                 with open(fpath, 'rb') as f:
                     # saving the first half of the file to a dict that send it immediately
+                    while index <= half:
+                        bytes_data = cls._int_to_string(index).encode()
+                        bytes_data += f.read(2022)
+                        curr_download1[index] = bytes_data
+                        index += 1
                     while index <= sum_of_packets:
                         bytes_data = cls._int_to_string(index).encode()
                         bytes_data += f.read(2022)
-                        curr_download[index] = bytes_data
+                        curr_download2[index] = bytes_data
                         index += 1
                 f.close()
                 # message = f'<start_download><{file_name}>'
 
-                return curr_download, size_of_file,len(bytes_data)
+                return curr_download1, curr_download2
             else:
-                return (None, 0)
-
-
-
+                return None, None
 
         client.send(OpCode.SI)
         filename = client.receive()
         file_path = os.path.join(cls._data_folder, filename)
         if os.path.exists(file_path):
-            bytes_data_dict, size_of_file, length = read_file(file_path)
-            if bytes_data_dict:
-                client.send(f'{length}')
+            bytes_data_dict1, bytes_data_dict2 = read_file(file_path)
+            if bytes_data_dict1:
+                client.send(f'{len(bytes_data_dict1)}')
                 resp = client.receive()
                 if resp == OpCode.SI:
                     user = client.ClientName
-                    selective_repeat(Server._self.host, client.Port + 100,bytes_data_dict,size_of_file)
+                    sender = selective_repeat(Server._self.host, client.Port + 100)
+                    sender.selective_repeat(bytes_data_dict1)
+                    resp = cls.ask_client_to_proceed(client)
+                    if resp == OpCode.RST:
+                        # todo logger failed
+                        return
+                    if resp == OpCode.ACK:
+                        if (bytes_data_dict2):
+                            sender.selective_repeat(bytes_data_dict2)
 
                     # cls._send_over_udp(bytes_data, client.Port + 100)
+                    client.send(f"all good")
                     resp = client.receive()
                     if resp == OpCode.ACK:
                         Logger.info(f"requested file [{filename}] sent to [{user}]")
 
                     else:
-                        Logger.error(f"client [{user}] failed to receive file [{filename}]")
+                        Logger.error(
+                            f"client [{user}] failed to receive file [{filename}]")
 
                 else:
                     Logger.info(f"client not ready to receive file [{filename}]")
@@ -170,7 +191,6 @@ class Handler:
         else:
             Logger.error("file not found")
             client.send(OpCode.RST)
-
 
     @classmethod
     def handle_cm(cls, client):
@@ -188,7 +208,6 @@ class Handler:
         else:
             client.send(OpCode.RST)
 
-
     @classmethod
     def handle_acm(cls, client):
         """ handle ACM request by the user
@@ -203,7 +222,6 @@ class Handler:
         else:
             client.send(OpCode.RST)
 
-
     @classmethod
     def handle_ccn(cls, client):
         """ handle CCN request by client
@@ -217,7 +235,6 @@ class Handler:
             clients_str += f'<"{cl}">'
         clients_str += '<end>'
         client.send(clients_str)
-
 
     @classmethod
     def handle_fin(cls, client):
@@ -368,7 +385,8 @@ class Server(safeqthreads.SafeWorker):
         self._available_ports.append(addr[1])
         Logger.info(f"available ports -> {self._available_ports}")
         self._client_handlers.pop(name, None)
-        self.ui_signal.info.emit(f"{len(self.connected_clients())}_{len(self._available_ports)}")
+        self.ui_signal.info.emit(
+            f"{len(self.connected_clients())}_{len(self._available_ports)}")
         self.send_to_all(name, f"<user '{name}' has disconnected>")
 
     # endregion
@@ -444,7 +462,8 @@ class Server(safeqthreads.SafeWorker):
         thread.start()
         self._client_handlers[name] = (thread, client)
         self._available_ports.remove(addr[1])
-        self.ui_signal.info.emit(f"{len(self.connected_clients())}_{len(self._available_ports)}")
+        self.ui_signal.info.emit(
+            f"{len(self.connected_clients())}_{len(self._available_ports)}")
         self._push_message(name, "<you have been connected!>")
         self.send_to_all(name, f"<user '{name}' has connected>")
 
@@ -461,11 +480,15 @@ class Server(safeqthreads.SafeWorker):
                 if name:
                     self._init_client_interface(client, addr, name)
                 else:
-                    Logger.info(f"Connection Refused[{addr}]: username already registered")
-                    self.ui_signal.logger.emit(f"Connection Refused[{addr}]: username already registered")
+                    Logger.info(
+                        f"Connection Refused[{addr}]: username already registered")
+                    self.ui_signal.logger.emit(
+                        f"Connection Refused[{addr}]: username already registered")
             else:
-                Logger.error(f'Connection Refused[{addr}]: port [{addr[1]}] already in use')
-                self.ui_signal.logger.emit(f'Connection Refused[{addr}]: port [{addr[1]}] already in use')
+                Logger.error(
+                    f'Connection Refused[{addr}]: port [{addr[1]}] already in use')
+                self.ui_signal.logger.emit(
+                    f'Connection Refused[{addr}]: port [{addr[1]}] already in use')
                 client.send(pickle.dumps(OpCode.RST))
 
     def run(self):

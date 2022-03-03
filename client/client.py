@@ -128,6 +128,15 @@ class Ui_MainWindow(QMainWindow):
         # self.te_logsbar.setText("") //This line is for show only new messages that the client recieves
         self.te_logsbar.insertPlainText(f"--> {log_text} \n")
 
+    def popup(self): # todo fix
+        box = QWidget() # checkbox, Abstractbutton
+        box.setGeometry(40,40,40,40)
+        box.setObjectName("confirm second half of file")
+        font = QFont()
+        font.setPointSize(12)
+        box.setFont(font)
+        box.show()
+
     def connect(self):
 
         name = self.le_usename.text()
