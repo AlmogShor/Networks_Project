@@ -51,3 +51,39 @@ class selective_repeat_client:
                 # saving the file into the dict
                 self.file_dict[int(index.decode())] = packet
                 message, address = self.udp_client_socket.recvfrom(2048)
+
+    @classmethod
+    def selective_repeat_client(self, serverip="127.0.0.1", port=51000, finished=False):
+        udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        udp_client.settimeout(2)
+        while True:
+            try:
+                start = 'start'
+                # sending to the server to let him know that the client is ready for downloading
+                udp_client.sendto(start.encode(), (serverip, port))
+                message, address = udp_client.recvfrom(2048)
+                break
+            except:
+                pass
+        udp_client.settimeout(100)
+        while True:
+            # when getting "Done!" all the file finished to download
+            if message.decode() == 'Done!':
+                udp_client.settimeout(5)
+                try:
+                    udp_client.sendto('finally'.encode(), (serverip, port))
+                    message, address = udp_client.recvfrom(2048)
+                except:
+                    break
+            # when the file didn't finished to downloading
+            else:
+                index = message[:5]
+                # sending the index of the packet that received(ack)
+                udp_client.sendto(index, (self.se, self.port_server))
+                packet = message[5:]
+                # saving the file into the dict
+                self.file[int(index.decode())] = packet
+                message, address = udp_client.recvfrom(2048)
+        if finished == 'yes':
+            # converting the dict back to a file
+            self.dict_to_file()

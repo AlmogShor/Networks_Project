@@ -1,6 +1,7 @@
 import socket
 import pickle
 from loges import Logger
+from selective_repeat_client import *
 
 Logger.init("client", logType="t")
 
@@ -101,41 +102,7 @@ class Handler():
         udp_client.close()
         return bytes_data
 
-    @classmethod
-    def selective_repeat_client(self, serverip="127.0.0.1", port=51000, finished=False):
-        udp_client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_client.settimeout(2)
-        while True:
-            try:
-                start = 'start'
-                # sending to the server to let him know that the client is ready for downloading
-                udp_client.sendto(start.encode(), (serverip, port))
-                message, address = udp_client.recvfrom(2048)
-                break
-            except:
-                pass
-        udp_client.settimeout(100)
-        while True:
-            # when getting "Done!" all the file finished to download
-            if message.decode() == 'Done!':
-                udp_client.settimeout(5)
-                try:
-                    udp_client.sendto('finally'.encode(), (serverip, port))
-                    message, address = udp_client.recvfrom(2048)
-                except:
-                    break
-            # when the file didn't finished to downloading
-            else:
-                index = message[:5]
-                # sending the index of the packet that received(ack)
-                udp_client.sendto(index, (self.se, self.port_server))
-                packet = message[5:]
-                # saving the file into the dict
-                self.file[int(index.decode())] = packet
-                message, address = udp_client.recvfrom(2048)
-        if finished == 'yes':
-            # converting the dict back to a file
-            self.dict_to_file()
+
 
     @classmethod
     def handle_dl(cls, client, args):
@@ -167,6 +134,7 @@ class Handler():
             else:
                 length = int(resp)
                 client.send(OpCode.SI)
+                recive = selective_repeat_client(server_ip,client._port+100,client.port+200)
                 bytes_data = cls._receive_over_udp(length, client.Port + 100)
                 write_file(filename, bytes_data)
                 client.send(OpCode.ACK)
