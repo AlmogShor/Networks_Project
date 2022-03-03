@@ -162,14 +162,14 @@ class Handler:
                 if resp == OpCode.SI:
                     user = client.ClientName
                     sender = selective_repeat(Server._self.host, client.Port + 100)
-                    sender.selective_repeat(bytes_data_dict1)
+                    sender.selective_repeat_sender(bytes_data_dict1)
                     resp = cls.ask_client_to_proceed(client)
                     if resp == OpCode.RST:
                         # todo logger failed
                         return
                     if resp == OpCode.ACK:
                         if (bytes_data_dict2):
-                            sender.selective_repeat(bytes_data_dict2)
+                            sender.selective_repeat_sender(bytes_data_dict2)
 
                     # cls._send_over_udp(bytes_data, client.Port + 100)
                     client.send(f"all good")

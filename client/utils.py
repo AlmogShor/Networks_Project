@@ -149,8 +149,10 @@ class Handler():
                 >>> @param:filename:    -> name of the file
                 >>> @param:bytes_data:  -> data to be written, in the form of bytes
             """
-            with open(filename, "wb") as f:
-                f.write(bytes_data)
+            with open(filename, "ab") as f:
+                for index, packet in sorted(bytes_data.items()):
+                    f.write(packet.decode())
+
 
         client.send(OpCode.DL)
         resp = client.receive()
