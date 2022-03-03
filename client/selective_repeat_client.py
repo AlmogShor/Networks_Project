@@ -3,8 +3,13 @@ import time
 from collections import deque
 import math
 
+
 class selective_repeat_client:
-    def __init__(self):
+    def __init__(self, addr, port_to_listen, port_for_ack):
+
+        self.server_addr = addr
+        self.port_to_listen = port_to_listen
+        self.port_for_ack = port_for_ack
 
         self.file_dict = {}
         self.udp_client_socket = None
@@ -12,8 +17,17 @@ class selective_repeat_client:
 
     def _init_socket(self):
         self.udp_client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_client_socket.bind(self.addr, self.port) # todo check
+        self.udp_client_socket.bind(self.addr, self.port_for_ack)  # todo check
 
+    def selective_repeat(self):
+        data, address = self.port_to_listen.recvfrom(2022)
+        idx = data[:5]
+        self.file_dict[int(idx.decode)] = data[5:]
+        # send ack
+        self.udp_client_socket.sendto(idx, (self.server_addr, self.port_for_ack))
+
+    def checksum(self):
+        pass
 
     def selective_repeat_reciever(self):
         while True:

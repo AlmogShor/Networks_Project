@@ -129,9 +129,10 @@ class Ui_MainWindow(QMainWindow):
         self.te_logsbar.insertPlainText(f"--> {log_text} \n")
 
     def popup(self): # todo fix
-        box = QWidget() # checkbox, Abstractbutton
+        box = QCheckBox() #, Abstractbutton
         box.setGeometry(40,40,40,40)
         box.setObjectName("confirm second half of file")
+        box.setText("proceed")
         font = QFont()
         font.setPointSize(12)
         box.setFont(font)

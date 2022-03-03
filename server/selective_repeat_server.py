@@ -6,25 +6,40 @@ import math
 
 class selective_repeat:
     @classmethod
-    def __init__(self, addr, port, file, size_of_file):
+    def __init__(self, addr, port):
         self.acked = {}
         self.addr = addr
         self.port = port
         self.seq = 0
         self.curr_download = {}
         self.nextpckt = 1
-        self.expct_ack = {}
+        self.expct_ack = list
         self.window_size = 6
         self.timeout = 4
-        self.file = file
-        self.size_of_file = size_of_file
-        self.sum_of_packets = math.ceil(self.size_of_file / 2022)
+        # self.sum_of_packets = math.ceil(self.size_of_file / 2022)
         self.udp_server_socket = None
         self._init_socket()
 
     def _init_socket(self):
-        self.udp_server_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_server_sock.bind(self.addr, self.port)
+        self.udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_server_socket.bind(self.addr, self.port)
+
+    def selective_repeat(self, bytes_data: dict):
+        no_of_packets = len(bytes_data)
+        time_stamps = {}
+        # for i in range(min(no_of_packets, self.window_size)):
+        #     self.curr_download.[self.nextpckt] = bytes_data[self.nextpckt]
+        #     self.nextpckt += 1
+        # self.nextpckt = 1
+        self.acked = {key: False for key in bytes_data}
+        last_packet_ind = self.seq + len(bytes_data)
+        while True:
+            while len(self.expct_ack) < self.window_size:
+                self.send_packet(bytes_data, self.nextpckt)
+                self.nextpckt += 1
+                self.expct_ack.append(self.nextpckt)
+            self.recieve_Acks()
+
 
     def selective_repeat_sender(self, something_to_send):  # todo decide about
         # parameters
@@ -73,10 +88,8 @@ class selective_repeat:
                     self.nextpckt += 1
 
     def send_packet(self, dict, idx):
-        if len(self.expct_ack) < self.window_size and self.curr_download.get(
-                self.nextpckt) is not None:
-            self.udp_server_sock.sendto(self.curr_download[self.nextpckt], address)
-            self.expct_ack.append(self.nextpckt)
+        self.udp_server_socket.sendto(dict[idx], (self.addr, self.port))
+        self.expct_ack.append(self.nextpckt)
 
     def recieve_Acks(self):
         while True:
@@ -84,8 +97,12 @@ class selective_repeat:
                 data, address = self.udp_server_sock.recvfrom(5)
                 idx = int(data.decode())
                 self.acked[idx] = True
+                if self.expct_ack.index(idx) is None:
+                    continue
+                ack_idx = self.expct_ack.index(idx)
+                self.expct_ack.pop(ack_idx)
             finally:
-                pass
+                break
 
     def selective_repeat_server(self):
 
