@@ -1,5 +1,6 @@
 from email.mime import message
 import os
+import sys
 import pickle
 import math
 from pyexpat.errors import messages
@@ -7,7 +8,7 @@ import socket
 from loges import Logger
 import safeqthreads
 from threading import Thread
-# import selective_repeat_server as udp_file_transfer
+import selective_repeat_server as udp_file_transfer
 from selective_repeat_server import *
 
 Logger.init("server_logs")
@@ -171,62 +172,62 @@ class Handler:
             client.send(OpCode.RST)
 
 
-@classmethod
-def handle_cm(cls, client):
-    """ handle CM request from client
-        >>> @param:client   -> ClientInterface instance, represents to current
-                                connected client
-    """
-    client.send(OpCode.SI)
-    target_client = client.receive()
-    client.send(OpCode.SI)
-    msgs = client.receive()
-    if Server.send(target_client, msgs):
+    @classmethod
+    def handle_cm(cls, client):
+        """ handle CM request from client
+            >>> @param:client   -> ClientInterface instance, represents to current
+                                    connected client
+        """
+        client.send(OpCode.SI)
+        target_client = client.receive()
+        client.send(OpCode.SI)
+        msgs = client.receive()
+        if Server.send(target_client, msgs):
+            client.send(OpCode.ACK)
+
+        else:
+            client.send(OpCode.RST)
+
+
+    @classmethod
+    def handle_acm(cls, client):
+        """ handle ACM request by the user
+            >>> @param:client   -> ClientInterface instance, represents to current
+                                    connected client
+        """
+        client.send(OpCode.SI)
+        msgs = client.receive()
+        if Server.send_to_all(client.ClientName, msgs):
+            client.send(OpCode.ACK)
+
+        else:
+            client.send(OpCode.RST)
+
+
+    @classmethod
+    def handle_ccn(cls, client):
+        """ handle CCN request by client
+            >>> @param:client   -> ClientInterface instance, represents to current
+                                    connected client
+        """
+        clients = Server.connected_clients()
+        clients.remove(client.ClientName)
+        clients_str = f'<users_lst><{len(clients)}>'
+        for cl in clients:
+            clients_str += f'<"{cl}">'
+        clients_str += '<end>'
+        client.send(clients_str)
+
+
+    @classmethod
+    def handle_fin(cls, client):
+        """ handle finish request by the client
+            >>> @param:client   -> ClientInterface instance, represents to current
+                                    connected client
+        """
+        Logger.info(f'ending session with {client._addr}')
         client.send(OpCode.ACK)
-
-    else:
-        client.send(OpCode.RST)
-
-
-@classmethod
-def handle_acm(cls, client):
-    """ handle ACM request by the user
-        >>> @param:client   -> ClientInterface instance, represents to current
-                                connected client
-    """
-    client.send(OpCode.SI)
-    msgs = client.receive()
-    if Server.send_to_all(client.ClientName, msgs):
-        client.send(OpCode.ACK)
-
-    else:
-        client.send(OpCode.RST)
-
-
-@classmethod
-def handle_ccn(cls, client):
-    """ handle CCN request by client
-        >>> @param:client   -> ClientInterface instance, represents to current
-                                connected client
-    """
-    clients = Server.connected_clients()
-    clients.remove(client.ClientName)
-    clients_str = f'<users_lst><{len(clients)}>'
-    for cl in clients:
-        clients_str += f'<"{cl}">'
-    clients_str += '<end>'
-    client.send(clients_str)
-
-
-@classmethod
-def handle_fin(cls, client):
-    """ handle finish request by the client
-        >>> @param:client   -> ClientInterface instance, represents to current
-                                connected client
-    """
-    Logger.info(f'ending session with {client._addr}')
-    client.send(OpCode.ACK)
-    client.stop()
+        client.stop()
 
 
 class ClientInterface(Thread):

@@ -112,7 +112,7 @@ class Handler():
                 udp_client.sendto(start.encode(), (serverip, port))
                 message, address = udp_client.recvfrom(2048)
                 break
-            except timeout:
+            except:
                 pass
         udp_client.settimeout(100)
         while True:
@@ -122,7 +122,7 @@ class Handler():
                 try:
                     udp_client.sendto('finally'.encode(), (serverip, port))
                     message, address = udp_client.recvfrom(2048)
-                except timeout:
+                except:
                     break
             # when the file didn't finished to downloading
             else:
@@ -261,7 +261,7 @@ class Handler():
             return f"invalid code [{resp}] received from server"
 
 
-class Client():
+class Client:
     """ module to enable client's communication with server  """
 
     def __init__(self, ui):

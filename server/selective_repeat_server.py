@@ -14,7 +14,7 @@ class selective_repeat:
         self.nextpckt = 1
         self.expct_ack = {}
         self.window_size = 6
-        self.timeout_clockes = [0] * SL_WINDOW_SIZE
+        self.timeout_clockes = [0] *4 # SL_WINDOW_SIZE
         self.timeout = 4
         self.file = file
         self.size_of_file = size_of_file
@@ -62,9 +62,21 @@ class selective_repeat:
             packets_queue.append(i)
 
     def send_packet(self, idx):
+        client_address = ("127.0.0.1", self.port)
         if len(self.expct_ack)<self.window_size and self.curr_download.get(self.nextpckt) is not None:
-            self.udp_server_sock.sendto(self.curr_download[self.nextpckt], address)
+            self.udp_server_sock.sendto(self.curr_download[self.nextpckt], client_address)
             self.expct_ack.append(self.nextpckt)
+        try:
+            data, address = self.udp_server_sock.recvfrom(5)
+            if self.expct_ack.index(int(data.decode())) is None:
+                return
+            ack_idx = self.expct_ack.index(int(data.decode()))
+            for packet_num in self.expct_ack:
+                if packet_num == int(data.decode()):
+                    pass
+
+        except:
+            pass
 
     def selective_repeat_server(self):
 
