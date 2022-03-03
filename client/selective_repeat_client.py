@@ -22,7 +22,7 @@ class selective_repeat_client:
     def selective_repeat(self):
         data, address = self.port_to_listen.recvfrom(2022)
         idx = data[:5]
-        self.file_dict[int(idx.decode)] = data[5:]
+        self.file_dict[int(int.from_bytes(idx,byteorder="big"))] = data[5:]
         # send ack
         self.udp_client_socket.sendto(idx, (self.server_addr, self.port_for_ack))
 

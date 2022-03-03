@@ -1,4 +1,5 @@
 import socket
+import threading
 import time
 from collections import deque
 import math
@@ -14,11 +15,14 @@ class selective_repeat:
         self.curr_download = {}
         self.nextpckt = 1
         self.expct_ack = list
-        self.window_size = 6
+        self.window_size = 4
+        self.window = tuple(1,1)
         self.timeout = 4
         # self.sum_of_packets = math.ceil(self.size_of_file / 2022)
         self.udp_server_socket = None
         self._init_socket()
+        self.ack_th = threading.Thread(target=self.recieve_Acks, args=())
+        self.ack_lock = threading.Lock
 
     def _init_socket(self):
         self.udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -33,6 +37,8 @@ class selective_repeat:
         # self.nextpckt = 1
         self.acked = {key: False for key in bytes_data}
         last_packet_ind = self.seq + len(bytes_data)
+        for data_idx in sorted(bytes_data.keys()):
+            self.curr_download[data_idx] = data_idx.to_bytes(length=5, byteorder="big") + bytes_data[data_idx]
         while True:
             while len(self.expct_ack) < self.window_size:
                 self.send_packet(bytes_data, self.nextpckt)
@@ -95,11 +101,12 @@ class selective_repeat:
         while True:
             try:
                 data, address = self.udp_server_sock.recvfrom(5)
-                idx = int(data.decode())
-                self.acked[idx] = True
-                if self.expct_ack.index(idx) is None:
+                idx = data[:5]
+                ack_rcv =int(int.from_bytes(idx, byteorder="big"))
+                self.acked[ack_rcv] = True
+                if self.expct_ack.index(ack_rcv) is None:
                     continue
-                ack_idx = self.expct_ack.index(idx)
+                ack_idx = self.expct_ack.index(ack_rcv)
                 self.expct_ack.pop(ack_idx)
             finally:
                 break
