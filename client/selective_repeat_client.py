@@ -20,14 +20,17 @@ class selective_repeat_client:
         self.udp_client_socket.bind(self.addr, self.port_for_ack)  # todo check
 
     def selective_repeat(self):
-        data, address = self.port_to_listen.recvfrom(2022)
-        idx = data[:5]
-        self.file_dict[int(int.from_bytes(idx,byteorder="big"))] = data[5:]
-        # send ack
-        self.udp_client_socket.sendto(idx, (self.server_addr, self.port_for_ack))
+        while True:
+            data, address = self.port_to_listen.recvfrom(2022)
+            idx = data[:5]
+            self.file_dict[int(int.from_bytes(idx,byteorder="big"))] = data[5:]
+            # send ack
+            self.udp_client_socket.sendto(idx, (self.server_addr, self.port_for_ack))
 
-    def checksum(self):
-        pass
+
+    def close(self):
+        self.udp_client_socket.settimeout(2)
+        return self.file_dict
 
     def selective_repeat_reciever(self):
         while True:
@@ -35,7 +38,7 @@ class selective_repeat_client:
             if message.decode() == 'Done!':
                 self.udp_client_socket.settimeout(5)
                 try:
-                    self.udp_client_socket.sendto('finally'.encode(), (serverip, port))
+                    # self.udp_client_socket.sendto('finally'.encode(), (serverip, port))
                     message, address = self.udp_client_socket.recvfrom(2048)
                 finally:
                     break
@@ -87,3 +90,4 @@ class selective_repeat_client:
         if finished == 'yes':
             # converting the dict back to a file
             self.dict_to_file()
+

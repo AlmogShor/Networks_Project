@@ -135,7 +135,11 @@ class Handler():
                 length = int(resp)
                 client.send(OpCode.SI)
                 recive = selective_repeat_client(server_ip,client._port+100,client.port+200)
-                bytes_data = cls._receive_over_udp(length, client.Port + 100)
+                recive.selective_repeat()
+                # wait for GUI proceed
+                recive.selective_repeat()
+               bytes_data = recive.close()
+                # bytes_data = cls._receive_over_udp(length, client.Port + 100)
                 write_file(filename, bytes_data)
                 client.send(OpCode.ACK)
                 Logger.info(f'file [{filename}] downloaded from server')
