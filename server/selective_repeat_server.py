@@ -15,7 +15,6 @@ class selective_repeat:
         self.nextpckt = 1
         self.expct_ack = {}
         self.window_size = 6
-        self.timeout_clockes = [0] * SL_WINDOW_SIZE
         self.timeout = 4
         self.file = file
         self.size_of_file = size_of_file
@@ -39,9 +38,9 @@ class selective_repeat:
         packets_number = len(something_to_send)
         time_stamps = {}
         packets_queue = deque()
-        for i in range( min(packets_number, self.window_size)):
+        for i in range(min(packets_number, self.window_size)):
             packets_queue.append(something_to_send[self.nextpckt])
-            self.nextpckt+=1
+            self.nextpckt += 1
         self.acked = {key: False for key in something_to_send}
         last_packet_ind = self.seq + len(something_to_send)
 
@@ -54,8 +53,9 @@ class selective_repeat:
             self.recieve_Acks()
 
         # continue sending
-        self.recieve_Acks() # todo can handle several?
+        self.recieve_Acks()  # todo can handle several?
         while len(packets_queue) != 0:
+            # todo wait(delay)
             i = packets_queue.pop()
             if not self.acked[i]:
                 if abs(time.clock() - time_stamps[i]) > self.timeout:
@@ -70,7 +70,7 @@ class selective_repeat:
                 self.seq += 1
                 if self.nextpckt <= last_packet_ind:
                     packets_queue.append(something_to_send[self.nextpckt])
-                    self.nextpckt+=1
+                    self.nextpckt += 1
 
     def send_packet(self, dict, idx):
         if len(self.expct_ack) < self.window_size and self.curr_download.get(
