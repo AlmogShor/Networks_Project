@@ -1,5 +1,7 @@
 import socket
 import pickle
+import threading
+
 from loges import Logger
 from selective_repeat_client import *
 
@@ -11,6 +13,7 @@ class OpCode:
     # codes for internel server working
     RST = "RST"  # server will respond with RST, if wrong packet is received
     ACK = "ACK"  # acknowledgement
+    PRCD = "PROCEED" # proceed download the file
     SI = "SI"  # send info, response if server needs more info
 
     # operations suported for client
@@ -131,11 +134,11 @@ class Handler():
             else:
                 length = int(resp)
                 client.send(OpCode.SI)
-                receive = selective_repeat_client(server_ip, client._port + 100, length)
-                receive.selective_repeat()
+                receiver = selective_repeat_client(server_ip, client._port + 100, length)
+                threading.Thread(target=receiver.run()).start()
                 # wait for GUI proceed
-                receive.selective_repeat()
-                bytes_data = receive.close()
+                receiver.selective_repeat()
+                bytes_data = receiver.close()
                 # bytes_data = cls._receive_over_udp(length, client.Port + 100)
                 write_file(filename, bytes_data)
                 client.send(OpCode.ACK)

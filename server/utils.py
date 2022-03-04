@@ -19,6 +19,7 @@ class OpCode:
     # codes for internel server working
     RST = "RST"  # server will respond with RST, if wrong packet is received
     ACK = "ACK"  # acknowledgement
+    PRCD = "PROCEED" # proceed download the file
     SI = "SI"  # send info, response if server needs more info
 
     # operations suported for client
@@ -160,13 +161,13 @@ class Handler:
                 resp = client.receive()
                 if resp == OpCode.SI:
                     user = client.ClientName
-                    sender = selective_repeat(Server._self.host, client.Port + 100)
-                    # threading.Thread.(bytes_data_dict1)
+                    sender = selective_repeat(Server.self.host, client.Port + 100)
+                    threading.Thread(target=sender.run, args=bytes_data_dict1).start()
                     resp = cls.ask_client_to_proceed(client)
                     if resp == OpCode.RST:
                         Logger.error(f"client [{user}] failed to receive first part of file [{filename}]")
                         return
-                    if resp == OpCode.ACK:
+                    if resp == OpCode.PRCD:
                         if (bytes_data_dict2):
                             sender.selective_repeat_sender(bytes_data_dict2)
 
