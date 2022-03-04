@@ -107,8 +107,8 @@ class selective_repeat:
     #                 self.nextpckt += 1
 
     def send_packet(self, packet_data):
-            self.udp_server_socket.sendto(packet_data, (self.addr, self.port))
-            self.expct_ack.append(self.nextpckt)
+        self.udp_server_socket.sendto(packet_data, (self.addr, self.port))
+        self.expct_ack.append(self.nextpckt)
 
     def recieve_Acks(self):
         while True:

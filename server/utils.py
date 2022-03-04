@@ -147,7 +147,6 @@ class Handler:
                         index += 1
                 f.close()
 
-
                 return curr_download1, curr_download2
             else:
                 return None, None

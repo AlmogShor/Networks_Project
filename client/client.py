@@ -128,9 +128,9 @@ class Ui_MainWindow(QMainWindow):
         # self.te_logsbar.setText("") //This line is for show only new messages that the client recieves
         self.te_logsbar.insertPlainText(f"--> {log_text} \n")
 
-    def popup(self): # todo fix
-        box = QCheckBox() #, Abstractbutton
-        box.setGeometry(40,40,40,40)
+    def popup(self):  # todo fix
+        box = QCheckBox()  # , Abstractbutton
+        box.setGeometry(40, 40, 40, 40)
         box.setObjectName("confirm second half of file")
         box.setText("proceed")
         font = QFont()
@@ -148,8 +148,10 @@ class Ui_MainWindow(QMainWindow):
 
         else:
             self.set_log(message)
+
     def connect_to_specific_ip(self):
         pass
+
     def _input_dialog(self, header, input_name):
         text, ok = QInputDialog().getText(self, header, input_name, QLineEdit.Normal)
         if text and ok:
