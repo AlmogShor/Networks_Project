@@ -240,7 +240,7 @@ class Handler():
         resp = client.receive()
         if resp == OpCode.ACK:
             client.stop()
-            # client.close()
+            client.close()
             return "client disconnected successfully"
 
         else:

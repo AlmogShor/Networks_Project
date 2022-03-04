@@ -45,7 +45,7 @@ class selective_repeat_client:
                 time.sleep(0.25)
                 try:
                     self.udp_client_socket.sendto(packet, (self.server_addr, self.port))
-                    data, address = self.udp_client_socket.recvfrom(2027)
+                    data, address = self.udp_client_socket.recvfrom(512)
 
                     return data
                 except:
@@ -60,7 +60,8 @@ class selective_repeat_client:
             self.rcv_seq += 1
             if self.rcv_seq == self.sum_of_packets:
                 break
-            data, address = self.port.recvfrom(2027)
+            data, address = self.port.recvfrom(512)
 
     def close(self):
+        self.udp_client_socket.close()
         return self.file_dict

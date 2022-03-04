@@ -57,6 +57,14 @@ class selective_repeat:
                 break
 
             self.recieve_Acks()
+            if not self.expct_ack:
+                if self.window_size <32:
+                    self.window_size *= 2
+                else:
+                    self.window_size += 2
+            elif self.expct_ack:
+               self.window_size = math.ceil(self.window_size/2)
+
             if not self.curr_download:
                 break
 
@@ -133,4 +141,4 @@ class selective_repeat:
                 break
 
     def close(self):
-        pass
+        self.udp_server_socket.close()

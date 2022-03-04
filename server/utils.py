@@ -130,19 +130,20 @@ class Handler:
                 size_of_file = os.path.getsize(fpath)
                 curr_download1 = {}
                 curr_download2 = {}
-                sum_of_packets = math.ceil(size_of_file / 2022)
+                sum_of_packets = math.ceil(size_of_file / 507)
                 half = sum_of_packets / 2 + 1
                 index = 1
                 with open(fpath, 'rb') as f:
                     # saving the first half of the file to a dict that send it immediately
                     while index <= half:
                         # bytes_data = cls._int_to_string(index).encode()
-                        bytes_data = f.read(2022)
+                        bytes_data = f.read(507)
                         curr_download1[index] = bytes_data
                         index += 1
+                    # saving the second half of the file to a dict that send it immediately
                     while index <= sum_of_packets:
                         # bytes_data = cls._int_to_string(index).encode()
-                        bytes_data = f.read(2022)
+                        bytes_data = f.read(507)
                         curr_download2[index] = bytes_data
                         index += 1
                 f.close()
@@ -155,7 +156,6 @@ class Handler:
         filename = client.receive()
         file_path = os.path.join(cls._data_folder, filename)
         if os.path.exists(file_path):
-            Logger.info(f"reading file..")
             bytes_data_dict1, bytes_data_dict2 = read_file(file_path)
             Logger.info(f"read file successfully")
             if bytes_data_dict1:
@@ -163,6 +163,7 @@ class Handler:
                 resp = client.receive()
                 if resp == OpCode.SI:
                     Logger.info(f"started download")
+                    Logger.info(bytes_data_dict1[1])
                     user = client.ClientName
                     sender = selective_repeat(Server._self.host, client.Port + 100)
                     threading.Thread(target=sender.run, args=bytes_data_dict1).start()
