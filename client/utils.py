@@ -117,9 +117,10 @@ class Handler():
                 >>> @param:filename:    -> name of the file
                 >>> @param:bytes_data:  -> data to be written, in the form of bytes
             """
+            sorted(bytes_data.keys())
             with open(filename, "ab") as f:
-                for keys in sorted(bytes_data.keys()):
-                    f.write(bytes_data[keys].decode())
+                for keys, value in bytes_data.items():
+                    f.write(value.decode())
 
         client.send(OpCode.DL)
         resp = client.receive()
@@ -136,7 +137,7 @@ class Handler():
                 length = int(resp)
                 client.send(OpCode.SI)
                 receiver = selective_repeat_client(client.server_ip, client._port + 100)
-                threading.Thread(target=receiver.run, args=length).start()
+                threading.Thread(target=receiver.run, args=(length,)).start()
                 print("downloaded first part")
                 # wait for GUI proceed
                 client.send(OpCode.PRCD)
@@ -147,13 +148,14 @@ class Handler():
 
                 length = int(resp)
                 if length > 0:
-                    threading.Thread(target=receiver.run, args=length).start()
+                    threading.Thread(target=receiver.run, args=(length,)).start()
                 bytes_data = receiver.close()
                 # bytes_data = cls._receive_over_udp(length, client.Port + 100)
                 write_file(filename, bytes_data)
+                print(bytes_data)
                 client.send(OpCode.ACK)
                 Logger.info(f'file [{filename}] downloaded from server')
-                return f'file [{filename}] downloaded from server'
+                return f'file [{filename}] downloaded from server. Last byte is []'
 
         else:
             Logger.error("server is not ready to send file - try again")
@@ -238,6 +240,7 @@ class Handler():
         resp = client.receive()
         if resp == OpCode.ACK:
             client.stop()
+            # client.close()
             return "client disconnected successfully"
 
         else:
@@ -361,7 +364,10 @@ class Client:
 
     def close(self):
         """ close session with server """
-        self._client.close()
+        try:
+            self._client.close()
+        except:
+            pass
 
     def stop(self):
         """ stop client loop"""
