@@ -1,4 +1,4 @@
-File Example no.1
+file Example no.1
 
 Open Internet Explorer
 > Tools > Internet Options > Connections tab > LAN settings > check -> Use a proxy server for your LAN ... > Set Address: 127.0.0.1 > Set Port: 8596

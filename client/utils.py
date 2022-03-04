@@ -136,18 +136,19 @@ class Handler():
                 length = int(resp)
                 client.send(OpCode.SI)
                 receiver = selective_repeat_client(client.server_ip, client._port + 100)
-                threading.Thread(target=receiver.run, args=length).start()
+                threading.Thread(target=receiver.run, args=(length,)).start()
                 print("downloaded first part")
                 # wait for GUI proceed
                 client.send(OpCode.PRCD)
+                print("sent proceed")
                 resp = client.receive()
                 if resp == OpCode.RST:
                     Logger.error('file not found or server failed to read file - try again')
                     return 'file not found or server failed to read file - try again'
-
+                print("downloading the second part")
                 length = int(resp)
                 if length > 0:
-                    threading.Thread(target=receiver.run, args=length).start()
+                    threading.Thread(target=receiver.run, args=(length,)).start()
                 bytes_data = receiver.close()
                 # bytes_data = cls._receive_over_udp(length, client.Port + 100)
                 write_file(filename, bytes_data)

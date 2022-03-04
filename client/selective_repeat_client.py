@@ -35,19 +35,21 @@ class selective_repeat_client:
     #             pass
 
     def _init_socket(self):
-        self.udp_client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_client_socket.bind((self.server_addr, self.port))  # todo check
-        packet = 0
-        packet.to_bytes(length=5, byteorder="big")
-        while True:
-            time.sleep(0.25)
-            try:
-                self.udp_client_socket.sendto(packet, (self.server_addr, self.port))
-                data, address = self.udp_client_socket.recvfrom(2027)
+        try:
+            self.udp_client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.udp_client_socket.bind((self.server_addr, self.port))  # todo check
+        finally:
+            packet = 0
+            packet.to_bytes(length=5, byteorder="big")
+            while True:
+                time.sleep(0.25)
+                try:
+                    self.udp_client_socket.sendto(packet, (self.server_addr, self.port))
+                    data, address = self.udp_client_socket.recvfrom(2027)
 
-                return data
-            except:
-                pass
+                    return data
+                except:
+                    pass
 
     def selective_repeat(self, data):
         while True:

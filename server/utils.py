@@ -174,11 +174,13 @@ class Handler:
                         Logger.error(f"client [{user}] failed to receive first part of file [{filename}]")
                         return
                     if resp == OpCode.PRCD:
+                        Logger.info(f"client [{user}] asked to proceed")
                         if bytes_data_dict2:
                             client.send(f'{len(bytes_data_dict2)}')
                             resp = client.receive
                             if resp == OpCode.SI:
                                 threading.Thread(targert=sender.selective_repeat, args=bytes_data_dict2).start()
+                            Logger.info(f"download second part")
                         else:
                             client.send(f'{0}')
                     # cls._send_over_udp(bytes_data, client.Port + 100)
