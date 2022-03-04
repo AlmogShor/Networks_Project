@@ -61,5 +61,4 @@ class selective_repeat_client:
             data, address = self.port.recvfrom(2027)
 
     def close(self):
-        self.udp_client_socket.settimeout(2)
         return self.file_dict

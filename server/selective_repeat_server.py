@@ -16,7 +16,7 @@ class selective_repeat:
         self.nextpckt = 1
         self.expct_ack = list
         self.window_size = 4
-        self.window = tuple(1, 1)
+        # self.window = tuple(1, 1)
         self.timeout = 4
         # self.sum_of_packets = math.ceil(self.size_of_file / 2022)
         self.udp_server_socket = None

@@ -135,8 +135,8 @@ class Handler():
                 print("file exist, start downloading")
                 length = int(resp)
                 client.send(OpCode.SI)
-                receiver = selective_repeat_client(server_ip, client._port + 100)
-                threading.Thread(target=receiver.run(), args=length).start()
+                receiver = selective_repeat_client(client.server_ip, client._port + 100)
+                threading.Thread(target=receiver.run, args=length).start()
                 print("downloaded first part")
                 # wait for GUI proceed
                 client.send(OpCode.PRCD)
@@ -147,7 +147,7 @@ class Handler():
 
                 length = int(resp)
                 if length > 0:
-                    threading.Thread(target=receiver.run(), args=length).start()
+                    threading.Thread(target=receiver.run, args=length).start()
                 bytes_data = receiver.close()
                 # bytes_data = cls._receive_over_udp(length, client.Port + 100)
                 write_file(filename, bytes_data)
@@ -256,6 +256,7 @@ class Client:
         self._STOP = False
         self.name = ""
         self.ui = ui
+        self.server_ip = ""
         self._port = None
 
     @property
@@ -284,6 +285,7 @@ class Client:
                     self._client.bind((serverip, p))
                     self._client.connect((serverip, port))
                     self._port = p
+                    self.server_ip = serverip
                 except Exception as e:
                     continue
                 resp = pickle.loads(self._client.recv(512))

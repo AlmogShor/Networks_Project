@@ -146,9 +146,9 @@ class Handler:
                         curr_download2[index] = bytes_data
                         index += 1
                 f.close()
-                Logger.info(f"reading file..")
 
-                return curr_download1, curr_download2, sum_of_packets
+
+                return curr_download1, curr_download2
             else:
                 return None, None
 
@@ -158,13 +158,14 @@ class Handler:
         if os.path.exists(file_path):
             Logger.info(f"reading file..")
             bytes_data_dict1, bytes_data_dict2 = read_file(file_path)
+            Logger.info(f"read file successfully")
             if bytes_data_dict1:
                 client.send(f'{len(bytes_data_dict1)}')
                 resp = client.receive()
                 if resp == OpCode.SI:
                     Logger.info(f"started download")
                     user = client.ClientName
-                    sender = selective_repeat(Server.self.host, client.Port + 100)
+                    sender = selective_repeat(Server._self.host, client.Port + 100)
                     threading.Thread(target=sender.run, args=bytes_data_dict1).start()
                     # resp = cls.ask_client_to_proceed(client)
                     Logger.info("downloaded first part")
