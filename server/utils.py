@@ -1,3 +1,4 @@
+import threading
 from email.mime import message
 import os
 import sys
@@ -8,7 +9,6 @@ import socket
 from loges import Logger
 import safeqthreads
 from threading import Thread
-import selective_repeat_server as udp_file_transfer
 from selective_repeat_server import *
 
 Logger.init("server_logs")
@@ -69,7 +69,6 @@ class Handler:
         resp = client.receive()
         return resp
 
-
     @classmethod
     def handle(cls, opcode, client):
         """ base function to handle client's request and pass control to respective handler
@@ -120,7 +119,7 @@ class Handler:
                                     connected client
         """
 
-        def read_file(fpath):
+        def read_file(fpath, bytes_data=None):
             """ read file content from active server's directory
                 >>> @param:fpath    -> file path
                 return 2 dictioneries , each containg half of the file
@@ -135,19 +134,19 @@ class Handler:
                 with open(fpath, 'rb') as f:
                     # saving the first half of the file to a dict that send it immediately
                     while index <= half:
-                        bytes_data = cls._int_to_string(index).encode()
+                        # bytes_data = cls._int_to_string(index).encode()
                         bytes_data += f.read(2022)
                         curr_download1[index] = bytes_data
                         index += 1
                     while index <= sum_of_packets:
-                        bytes_data = cls._int_to_string(index).encode()
+                        # bytes_data = cls._int_to_string(index).encode()
                         bytes_data += f.read(2022)
                         curr_download2[index] = bytes_data
                         index += 1
                 f.close()
                 # message = f'<start_download><{file_name}>'
 
-                return curr_download1, curr_download2
+                return curr_download1, curr_download2, sum_of_packets
             else:
                 return None, None
 
@@ -162,10 +161,10 @@ class Handler:
                 if resp == OpCode.SI:
                     user = client.ClientName
                     sender = selective_repeat(Server._self.host, client.Port + 100)
-                    sender.selective_repeat_sender(bytes_data_dict1)
+                    # threading.Thread.(bytes_data_dict1)
                     resp = cls.ask_client_to_proceed(client)
                     if resp == OpCode.RST:
-                        # todo logger failed
+                        Logger.error(f"client [{user}] failed to receive first part of file [{filename}]")
                         return
                     if resp == OpCode.ACK:
                         if (bytes_data_dict2):

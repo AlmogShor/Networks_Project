@@ -5,11 +5,10 @@ import math
 
 
 class selective_repeat_client:
-    def __init__(self, addr, port_to_listen, port_for_ack):
+    def __init__(self, addr, port):
 
         self.server_addr = addr
-        self.port_to_listen = port_to_listen
-        self.port_for_ack = port_for_ack
+        self.port = port
 
         self.file_dict = {}
         self.udp_client_socket = None
@@ -17,7 +16,7 @@ class selective_repeat_client:
 
     def _init_socket(self):
         self.udp_client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_client_socket.bind(self.addr, self.port_for_ack)  # todo check
+        self.udp_client_socket.bind(self.addr, self.port)  # todo check
 
     def selective_repeat(self):
         while True:
@@ -25,7 +24,7 @@ class selective_repeat_client:
             idx = data[:5]
             self.file_dict[int(int.from_bytes(idx,byteorder="big"))] = data[5:]
             # send ack
-            self.udp_client_socket.sendto(idx, (self.server_addr, self.port_for_ack))
+            self.udp_client_socket.sendto(idx, (self.server_addr, self.port))
 
 
     def close(self):

@@ -102,8 +102,6 @@ class Handler():
         udp_client.close()
         return bytes_data
 
-
-
     @classmethod
     def handle_dl(cls, client, args):
         """ handle download operation, to download a file from server
@@ -120,7 +118,6 @@ class Handler():
                 for index, packet in sorted(bytes_data.items()):
                     f.write(packet.decode())
 
-
         client.send(OpCode.DL)
         resp = client.receive()
         if resp == OpCode.SI:
@@ -134,11 +131,11 @@ class Handler():
             else:
                 length = int(resp)
                 client.send(OpCode.SI)
-                recive = selective_repeat_client(server_ip,client._port+100,client.port+200)
-                recive.selective_repeat()
+                receive = selective_repeat_client(server_ip, client._port + 100, length)
+                receive.selective_repeat()
                 # wait for GUI proceed
-                recive.selective_repeat()
-               bytes_data = recive.close()
+                receive.selective_repeat()
+                bytes_data = receive.close()
                 # bytes_data = cls._receive_over_udp(length, client.Port + 100)
                 write_file(filename, bytes_data)
                 client.send(OpCode.ACK)
