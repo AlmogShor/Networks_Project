@@ -105,6 +105,7 @@ class Handler:
             resp += f'<"{f}">'
         resp += '<end>'
         client.send(resp)
+        Logger.info(f"list for client")
 
     @classmethod
     def _send_over_udp(cls, bytes_data, port):
@@ -136,16 +137,16 @@ class Handler:
                     # saving the first half of the file to a dict that send it immediately
                     while index <= half:
                         # bytes_data = cls._int_to_string(index).encode()
-                        bytes_data += f.read(2022)
+                        bytes_data = f.read(2022)
                         curr_download1[index] = bytes_data
                         index += 1
                     while index <= sum_of_packets:
                         # bytes_data = cls._int_to_string(index).encode()
-                        bytes_data += f.read(2022)
+                        bytes_data = f.read(2022)
                         curr_download2[index] = bytes_data
                         index += 1
                 f.close()
-                # message = f'<start_download><{file_name}>'
+                Logger.info(f"reading file..")
 
                 return curr_download1, curr_download2, sum_of_packets
             else:
@@ -155,15 +156,18 @@ class Handler:
         filename = client.receive()
         file_path = os.path.join(cls._data_folder, filename)
         if os.path.exists(file_path):
+            Logger.info(f"reading file..")
             bytes_data_dict1, bytes_data_dict2 = read_file(file_path)
             if bytes_data_dict1:
                 client.send(f'{len(bytes_data_dict1)}')
                 resp = client.receive()
                 if resp == OpCode.SI:
+                    Logger.info(f"started download")
                     user = client.ClientName
                     sender = selective_repeat(Server.self.host, client.Port + 100)
                     threading.Thread(target=sender.run, args=bytes_data_dict1).start()
                     # resp = cls.ask_client_to_proceed(client)
+                    Logger.info("downloaded first part")
                     resp = client.receive()
                     if resp == OpCode.RST:
                         Logger.error(f"client [{user}] failed to receive first part of file [{filename}]")
@@ -171,7 +175,9 @@ class Handler:
                     if resp == OpCode.PRCD:
                         if bytes_data_dict2:
                             client.send(f'{len(bytes_data_dict2)}')
-                            threading.Thread(targert=sender.selective_repeat, args=bytes_data_dict2).start()
+                            resp = client.receive
+                            if resp == OpCode.SI:
+                                threading.Thread(targert=sender.selective_repeat, args=bytes_data_dict2).start()
                         else:
                             client.send(f'{0}')
                     # cls._send_over_udp(bytes_data, client.Port + 100)

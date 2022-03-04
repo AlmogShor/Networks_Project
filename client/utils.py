@@ -132,10 +132,12 @@ class Handler():
                 return 'file not found or server failed to read file - try again'
 
             else:
+                print("file exist, start downloading")
                 length = int(resp)
                 client.send(OpCode.SI)
                 receiver = selective_repeat_client(server_ip, client._port + 100)
-                threading.Thread(target=receiver.run(),args=length).start()
+                threading.Thread(target=receiver.run(), args=length).start()
+                print("downloaded first part")
                 # wait for GUI proceed
                 client.send(OpCode.PRCD)
                 resp = client.receive()
