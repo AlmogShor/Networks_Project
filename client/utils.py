@@ -13,7 +13,7 @@ class OpCode:
     # codes for internel server working
     RST = "RST"  # server will respond with RST, if wrong packet is received
     ACK = "ACK"  # acknowledgement
-    PRCD = "PROCEED" # proceed download the file
+    PRCD = "PROCEED"  # proceed download the file
     SI = "SI"  # send info, response if server needs more info
 
     # operations suported for client
@@ -118,8 +118,8 @@ class Handler():
                 >>> @param:bytes_data:  -> data to be written, in the form of bytes
             """
             with open(filename, "ab") as f:
-                for index, packet in sorted(bytes_data.items()):
-                    f.write(packet.decode())
+                for keys in sorted(bytes_data.keys()):
+                    f.write(bytes_data[keys].decode())
 
         client.send(OpCode.DL)
         resp = client.receive()
@@ -134,10 +134,18 @@ class Handler():
             else:
                 length = int(resp)
                 client.send(OpCode.SI)
-                receiver = selective_repeat_client(server_ip, client._port + 100, length)
-                threading.Thread(target=receiver.run()).start()
+                receiver = selective_repeat_client(server_ip, client._port + 100)
+                threading.Thread(target=receiver.run(),args=length).start()
                 # wait for GUI proceed
-                receiver.selective_repeat()
+                client.send(OpCode.PRCD)
+                resp = client.receive()
+                if resp == OpCode.RST:
+                    Logger.error('file not found or server failed to read file - try again')
+                    return 'file not found or server failed to read file - try again'
+
+                length = int(resp)
+                if length > 0:
+                    threading.Thread(target=receiver.run(), args=length).start()
                 bytes_data = receiver.close()
                 # bytes_data = cls._receive_over_udp(length, client.Port + 100)
                 write_file(filename, bytes_data)

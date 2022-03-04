@@ -129,3 +129,6 @@ class selective_repeat:
                 if self.expct_ack:
                     pass  # congestion control decrease window
                 break
+
+    def close(self):
+        pass
