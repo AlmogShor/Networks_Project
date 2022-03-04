@@ -29,14 +29,16 @@ class selective_repeat:
         self.selective_repeat(bytes_data)
 
     def _init_socket(self):
-        self.udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_server_socket.bind((self.addr, self.port))
-        while True:
-            try:
-                self.udp_server_socket.recvfrom(5)
-                break
-            except:
-                pass
+        try:
+            self.udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.udp_server_socket.bind((self.addr, self.port))
+        finally:
+            while True:
+                try:
+                    self.udp_server_socket.recvfrom(5)
+                    break
+                except:
+                    pass
 
     def selective_repeat(self, bytes_data: dict):
         no_of_packets = len(bytes_data)
