@@ -46,13 +46,17 @@ class selective_repeat:
                 pass
 
     def selective_repeat(self, bytes_data: dict):
+        last_packet_ind = 0
+        self.nextpckt = 1000000
+        for key in bytes_data.keys():
+            last_packet_ind = max(last_packet_ind, key)
+            self.nextpckt = min(self.nextpckt, key)
         no_of_packets = len(bytes_data)
         time_stamps = {}
         self.acked = {key: False for key in bytes_data}
-        last_packet_ind = self.seq + no_of_packets
+        # last_packet_ind = self.seq + no_of_packets
         for data_idx in sorted(bytes_data.keys()):
             self.curr_download[data_idx] = data_idx.to_bytes(length=5, byteorder="big") + bytes_data[data_idx]
-        print(type(self.curr_download[1]))
         while True:
             print(self.expct_ack)
             try:

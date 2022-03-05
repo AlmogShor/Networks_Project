@@ -139,8 +139,10 @@ class Handler():
                     client.send(OpCode.SI)
                     receiver = selective_repeat_client(client.server_ip, client._port + 100,filename)
                     threading.Thread(target=receiver.run, args=(length,)).start()
-                    print("downloaded first part")
+
+                    # return f'file [{filename}] downloaded first part from server. Last byte is []'
                 else:# wait for GUI proceed
+                    print("hellp")
                     client.send(OpCode.PRCD)
                     resp = client.receive()
                     if resp == OpCode.RST:
@@ -151,7 +153,7 @@ class Handler():
                     if length > 0:
                         receiver = selective_repeat_client(client.server_ip, client._port + 100, filename)
                         threading.Thread(target=receiver.run, args=(length,)).start()
-                client.send(OpCode.ACK)
+                # client.send(OpCode.ACK)
                 Logger.info(f'file [{filename}] downloaded from server')
                 return f'file [{filename}] downloaded from server. Last byte is []'
 

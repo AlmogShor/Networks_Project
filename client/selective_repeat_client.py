@@ -22,6 +22,7 @@ class selective_repeat_client:
         self.selective_repeat(data)
         self.close()
         self.write_file(self.filename, self.file_dict)
+        print("done here")
 
     # def scnd_run(self, length):
     #     self.rcv_seq = 0

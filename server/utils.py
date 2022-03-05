@@ -164,34 +164,37 @@ class Handler:
                 resp = client.receive()
                 if resp == OpCode.SI:
                     Logger.info(f"started download")
-
                     user = client.ClientName
                     sender = selective_repeat(Server._self.host, client.Port + 100)
                     threading.Thread(target=sender.run, args=(bytes_data_dict1,)).start()
                     # resp = cls.ask_client_to_proceed(client)
                     Logger.info("downloaded first part")
-                    resp = client.receive()
                     if resp == OpCode.RST:
                         Logger.error(f"client [{user}] failed to receive first part of file [{filename}]")
                         return
-                    if resp == OpCode.PRCD:
-                        if bytes_data_dict2:
-                            client.send(f'{len(bytes_data_dict2)}')
-                            resp = client.receive
-                            if resp == OpCode.SI:
-                                threading.Thread(targert=sender.run, args=(bytes_data_dict2,)).start()
-                        else:
-                            client.send(f'{0}')
+                    else:
+                        Logger.info(f"sent first part")
+                        return
+                elif resp == OpCode.PRCD:
+                    print("part two")
+                    if bytes_data_dict2:
+                        client.send(f'{len(bytes_data_dict2)}')
+                        # sender = selective_repeat(Server._self.host, client.Port + 100)
+                        sender = selective_repeat(Server._self.host, client.Port + 100)
+                        threading.Thread(target=sender.run, args=(bytes_data_dict2,)).start()
+
+                    else:
+                        client.send(f'{0}')
                     # cls._send_over_udp(bytes_data, client.Port + 100)
                     # sender.close()
                     client.send(f"all good")
                     resp = client.receive()
-                    if resp == OpCode.ACK:
-                        Logger.info(f"requested file [{filename}] sent to [{user}]")
-
-                    else:
-                        Logger.error(
-                            f"client [{user}] failed to receive file [{filename}]")
+                    # if resp == OpCode.ACK:
+                    #     Logger.info(f"requested file [{filename}] sent to [{user}]")
+                    #
+                    # else:
+                    #     Logger.error(
+                    #         f"client [{user}] failed to receive file [{filename}]")
 
                 else:
                     Logger.info(f"client not ready to receive file [{filename}]")
