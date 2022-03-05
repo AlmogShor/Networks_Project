@@ -134,6 +134,7 @@ class Handler():
 
             else:
                 if client.last_file_download is None or client.last_file_download != filename:
+                    msg = 1
                     client.last_file_download = filename
                     length = int(resp)
                     client.send(OpCode.SI)
@@ -143,6 +144,7 @@ class Handler():
                     # return f'file [{filename}] downloaded first part from server. Last byte is []'
                 else:# wait for GUI proceed
                     client.last_file_download = None
+                    msg = 2
                     client.send(OpCode.PRCD)
                     resp = client.receive()
                     if resp == OpCode.RST:
@@ -154,7 +156,10 @@ class Handler():
                         threading.Thread(target=receiver.run, args=(length,)).start()
                 # client.send(OpCode.ACK)
                 Logger.info(f'file [{filename}] downloaded from server')
-                return f'file [{filename}] downloaded from server. Last byte is []'
+                if msg ==1:
+                    return f' downloaded first part of [{filename}] from server. Last byte is []'
+                else:
+                    return f'file [{filename}] downloaded from server. Last byte is []'
 
         else:
             Logger.error("server is not ready to send file - try again")
