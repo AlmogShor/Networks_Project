@@ -120,7 +120,7 @@ class Handler():
             sorted(bytes_data.keys())
             with open(filename, "ab") as f:
                 for keys, value in bytes_data.items():
-                    f.write(value.decode())
+                    f.write(value)
 
         client.send(OpCode.DL)
         resp = client.receive()
@@ -133,26 +133,24 @@ class Handler():
                 return 'file not found or server failed to read file - try again'
 
             else:
-                print("file exist, start downloading")
-                length = int(resp)
-                client.send(OpCode.SI)
-                receiver = selective_repeat_client(client.server_ip, client._port + 100)
-                threading.Thread(target=receiver.run, args=(length,)).start()
-                print("downloaded first part")
-                # wait for GUI proceed
-                client.send(OpCode.PRCD)
-                resp = client.receive()
-                if resp == OpCode.RST:
-                    Logger.error('file not found or server failed to read file - try again')
-                    return 'file not found or server failed to read file - try again'
-
-                length = int(resp)
-                if length > 0:
+                if client.last_file_download is None or client.last_file_download != filename:
+                    client.last_file_download = filename
+                    length = int(resp)
+                    client.send(OpCode.SI)
+                    receiver = selective_repeat_client(client.server_ip, client._port + 100,filename)
                     threading.Thread(target=receiver.run, args=(length,)).start()
-                bytes_data = receiver.close()
-                # bytes_data = cls._receive_over_udp(length, client.Port + 100)
-                print(bytes_data)
-                write_file(filename, bytes_data)
+                    print("downloaded first part")
+                else:# wait for GUI proceed
+                    client.send(OpCode.PRCD)
+                    resp = client.receive()
+                    if resp == OpCode.RST:
+                        Logger.error('file not found or server failed to read file - try again')
+                        return 'file not found or server failed to read file - try again'
+                    length = int(resp)
+                    print(length)
+                    if length > 0:
+                        receiver = selective_repeat_client(client.server_ip, client._port + 100, filename)
+                        threading.Thread(target=receiver.run, args=(length,)).start()
                 client.send(OpCode.ACK)
                 Logger.info(f'file [{filename}] downloaded from server')
                 return f'file [{filename}] downloaded from server. Last byte is []'
@@ -258,6 +256,7 @@ class Client:
         self._client = None
         self._STOP = False
         self.name = ""
+        self.last_file_download = None
         self.ui = ui
         self.server_ip = ""
         self._port = None
