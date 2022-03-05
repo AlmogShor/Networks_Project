@@ -77,5 +77,8 @@ class selective_repeat_client:
                 f.write(value)
 
     def close(self):
-        self.udp_client_socket.close()
+        try:
+            self.udp_client_socket.close()
+        except:
+            pass
         return self.file_dict

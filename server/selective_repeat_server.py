@@ -60,14 +60,6 @@ class selective_repeat:
                 break
 
             self.recieve_Ack()
-            if not self.expct_ack:
-                if self.window_size < 32:
-                    self.window_size *= 2
-                else:
-                    self.window_size += 2
-            elif self.expct_ack and len(self.expct_ack) > 2:
-                self.window_size = math.ceil(self.window_size / 2)
-
             if not self.curr_download:
                 break
 
@@ -84,6 +76,10 @@ class selective_repeat:
             self.acked[ack_rcv] = True
         except socket.timeout as error:
             print(error)
+            if self.window_size > 4:
+                self.window_size = 4
+            else:
+                self.window_size = 2
             for key in self.expct_ack:
                 try:
                     self.udp_server_socket.sendto(self.curr_download[key], (self.addr, self.port))
@@ -103,8 +99,14 @@ class selective_repeat:
                 if ack_rcv != right_seq:
                     self.udp_server_socket.sendto(self.curr_download[right_seq], (self.addr, self.port))
                     self.expct_ack.append(right_seq)
+                    if self.window_size > 2:
+                        self.window_size -= 1
                 else:
                     self.curr_download.pop(ack_rcv)
+                    if self.window_size < 32:
+                        self.window_size *= 2
+                    else:
+                        self.window_size += 2
                     return
         except:
             pass

@@ -332,7 +332,10 @@ class Client:
             self._client.sendall(serialized_data)
 
         else:
-            self._client.send(serialized_data)
+            try:
+                self._client.send(serialized_data)
+            except:
+                pass
 
     def is_message(self, datastr):
         """ return True if datastr is a message else False """
