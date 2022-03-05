@@ -55,7 +55,6 @@ class selective_repeat:
         for data_idx in sorted(bytes_data.keys()):
             self.curr_download[data_idx] = data_idx.to_bytes(length=5, byteorder="big") + bytes_data[data_idx]
         while True:
-            print(self.expct_ack)
             try:
                 while len(self.expct_ack) < self.window_size and self.nextpckt <= last_packet_ind:
                     self.send_packet(self.curr_download[self.nextpckt])
