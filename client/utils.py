@@ -142,6 +142,7 @@ class Handler():
 
                     # return f'file [{filename}] downloaded first part from server. Last byte is []'
                 else:# wait for GUI proceed
+                    client.last_file_download = None
                     client.send(OpCode.PRCD)
                     resp = client.receive()
                     if resp == OpCode.RST:

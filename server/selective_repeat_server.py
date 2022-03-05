@@ -33,14 +33,14 @@ class selective_repeat:
             self.udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.udp_server_socket.bind((self.addr, self.port))
         finally:
-
-            self.udp_server_socket.settimeout(2)
-            try:
-                msg, addr = self.udp_server_socket.recvfrom(5)
-                self.port = addr[1]
-            except Exception as e:
-                print(e)
-                pass
+            while True:
+                try:
+                    msg, addr = self.udp_server_socket.recvfrom(5)
+                    self.port = addr[1]
+                    break
+                except Exception as e:
+                    print(e)
+                    pass
 
     def selective_repeat(self, bytes_data: dict):
         last_packet_ind = 0
@@ -65,13 +65,13 @@ class selective_repeat:
                 break
 
             self.recieve_Ack()
-            if not self.expct_ack:
-                if self.window_size < 32:
-                    self.window_size *= 2
-                else:
-                    self.window_size += 2
-            elif self.expct_ack:
-                self.window_size = math.ceil(self.window_size / 2)
+            # if not self.expct_ack:
+            #     if self.window_size < 32:
+            #         self.window_size *= 2
+            #     else:
+            #         self.window_size += 2
+            # elif self.expct_ack:
+            #     self.window_size = math.ceil(self.window_size / 2)
 
             if not self.curr_download:
                 break
@@ -82,49 +82,39 @@ class selective_repeat:
 
     def recieve_Ack(self):
         try:
-            self.udp_server_socket.settimeout(1)
+            self.udp_server_socket.settimeout(2.2)
             data, address = self.udp_server_socket.recvfrom(5)
             idx = data[:5]
             ack_rcv = int(int.from_bytes(idx, byteorder="big"))
             self.acked[ack_rcv] = True
-        except:
+        except socket.timeout as error:
+            print("time out?")
+            print(error)
+            for key in self.expct_ack:
+                try:
+                    self.udp_server_socket.sendto(self.curr_download[key], (self.addr, self.port))
+                except Exception as e:
+                    print(e)
             return
+        except socket.error as error:
+            print(error)
+            while len(self.expct_ack):
+                test = self.expct_ack.pop(0)
+                self.curr_download.pop(test)
+
         try:
             self.expct_ack.index(ack_rcv)
-            right_seq = self.expct_ack.pop(0)
-            if ack_rcv != right_seq:
-                self.send_packet(self.curr_download[right_seq])
-                self.expct_ack.append(right_seq)
-            else:
-                self.curr_download.pop(ack_rcv)
-                return
+            while True:
+                right_seq = self.expct_ack.pop(0)
+                if ack_rcv != right_seq:
+                    self.udp_server_socket.sendto(self.curr_download[right_seq], (self.addr, self.port))
+                    self.expct_ack.append(right_seq)
+                else:
+                    self.curr_download.pop(ack_rcv)
+                    return
         except:
             pass
-        # self.expct_ack.pop(ack_rcv)
-
-        #     while True:
-        #         try:
-        #             idx = data[:5]
-        #             ack_rcv = int(int.from_bytes(idx, byteorder="big"))
-        #             if self.expct_ack.index(ack_rcv) is None:
-        #                 continue
-        #             right_seq = self.expct_ack.pop(0)
-        #             if ack_rcv != right_seq:
-        #                 self.send_packet(self.curr_download[right_seq])
-        #                 self.expct_ack.append(right_seq)
-        #             else:
-        #                 self.curr_download.pop(ack_rcv)
-        #                 break
-        #             # self.expct_ack.pop(ack_rcv)
-        #
-        #             if not self.expct_ack:
-        #                 pass  # congestion control increase window
-        #         finally:
-        #             if self.expct_ack:
-        #                 pass  # congestion control decrease window
-        #             break
-        # except:
-        #     pass
 
     def close(self):
+        print("closed")
         self.udp_server_socket.close()

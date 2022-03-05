@@ -42,12 +42,13 @@ class selective_repeat_client:
             # self.udp_client_socket.bind((self.server_addr, 51000))  # todo check
         finally:
             time.sleep(0.25)
-            try:
-                self.udp_client_socket.sendto("ack".encode(), (self.server_addr, self.port))
-                data, address = self.udp_client_socket.recvfrom(512)
-                return data
-            except:
-                print("except")
+            while True:
+                try:
+                    self.udp_client_socket.sendto("ack".encode(), (self.server_addr, self.port))
+                    data, address = self.udp_client_socket.recvfrom(512)
+                    return data
+                except:
+                    pass
 
     def selective_repeat(self, data):
         while True:
@@ -76,5 +77,6 @@ class selective_repeat_client:
                 f.write(value)
 
     def close(self):
+        print("closed")
         self.udp_client_socket.close()
         return self.file_dict
