@@ -1,9 +1,5 @@
 import socket
 import sys
-import threading
-import time
-# from loges import Logger
-from collections import deque
 import math
 
 
@@ -16,6 +12,7 @@ class selective_repeat:
         self.seq = 0
         self.curr_download = {}
         self.nextpckt = 1
+        self.last_packet_ind = 0
         self.expct_ack = []
         self.window_size = 4
         # self.window = tuple(1, 1)
@@ -24,11 +21,11 @@ class selective_repeat:
         self.udp_server_socket = None
 
     def run(self, bytes_data: dict):
-        self._init_socket()
-        self.selective_repeat(bytes_data)
+        self._init_socket(bytes_data)
+        self.selective_repeat()
         self.close()
 
-    def _init_socket(self):
+    def _init_socket(self, bytes_data: dict):
         try:
             self.udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.udp_server_socket.bind((self.addr, self.port))
@@ -37,26 +34,25 @@ class selective_repeat:
                 try:
                     msg, addr = self.udp_server_socket.recvfrom(5)
                     self.port = addr[1]
+                    self.last_packet_ind = 0
+                    self.nextpckt = sys.maxsize
+                    for key in bytes_data.keys():
+                        self.last_packet_ind = max(self.last_packet_ind, key)
+                        self.nextpckt = min(self.nextpckt, key)
+                    self.acked = {key: False for key in bytes_data}
+
+                    for data_idx in sorted(bytes_data.keys()):
+                        self.curr_download[data_idx] = data_idx.to_bytes(length=5, byteorder="big") + bytes_data[
+                            data_idx]
                     break
                 except Exception as e:
                     print(e)
                     pass
 
-    def selective_repeat(self, bytes_data: dict):
-        last_packet_ind = 0
-        self.nextpckt = sys.maxsize
-        for key in bytes_data.keys():
-            last_packet_ind = max(last_packet_ind, key)
-            self.nextpckt = min(self.nextpckt, key)
-        no_of_packets = len(bytes_data)
-        time_stamps = {}
-        self.acked = {key: False for key in bytes_data}
-        # last_packet_ind = self.seq + no_of_packets
-        for data_idx in sorted(bytes_data.keys()):
-            self.curr_download[data_idx] = data_idx.to_bytes(length=5, byteorder="big") + bytes_data[data_idx]
+    def selective_repeat(self):
         while True:
             try:
-                while len(self.expct_ack) < self.window_size and self.nextpckt <= last_packet_ind:
+                while len(self.expct_ack) < self.window_size and self.nextpckt <= self.last_packet_ind:
                     self.send_packet(self.curr_download[self.nextpckt])
                     self.nextpckt += 1
                     self.seq += 1
@@ -64,13 +60,13 @@ class selective_repeat:
                 break
 
             self.recieve_Ack()
-            # if not self.expct_ack:
-            #     if self.window_size < 32:
-            #         self.window_size *= 2
-            #     else:
-            #         self.window_size += 2
-            # elif self.expct_ack:
-            #     self.window_size = math.ceil(self.window_size / 2)
+            if not self.expct_ack:
+                if self.window_size < 32:
+                    self.window_size *= 2
+                else:
+                    self.window_size += 2
+            elif self.expct_ack and len(self.expct_ack) > 2:
+                self.window_size = math.ceil(self.window_size / 2)
 
             if not self.curr_download:
                 break
@@ -87,7 +83,6 @@ class selective_repeat:
             ack_rcv = int(int.from_bytes(idx, byteorder="big"))
             self.acked[ack_rcv] = True
         except socket.timeout as error:
-            print("time out?")
             print(error)
             for key in self.expct_ack:
                 try:
