@@ -176,7 +176,6 @@ class Handler:
                         Logger.info(f"sent first part")
                         return
                 elif resp == OpCode.PRCD:
-                    print("part two")
                     if bytes_data_dict2:
                         client.send(f'{len(bytes_data_dict2)}')
                         # sender = selective_repeat(Server._self.host, client.Port + 100)

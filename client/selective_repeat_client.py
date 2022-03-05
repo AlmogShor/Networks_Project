@@ -14,15 +14,12 @@ class selective_repeat_client:
         self.filename = filename
 
     def run(self, length):
-        print("start run")
         self.rcv_seq = 0
         self.sum_of_packets = length
-        print(length)
         data = self._init_socket()
         self.selective_repeat(data)
         self.close()
         self.write_file(self.filename, self.file_dict)
-        print("done here")
 
     # def scnd_run(self, length):
     #     self.rcv_seq = 0
@@ -46,18 +43,14 @@ class selective_repeat_client:
         finally:
             time.sleep(0.25)
             try:
-                print("insert try init")
                 self.udp_client_socket.sendto("ack".encode(), (self.server_addr, self.port))
                 data, address = self.udp_client_socket.recvfrom(512)
-                print(data)
-
                 return data
             except:
                 print("except")
 
     def selective_repeat(self, data):
         while True:
-            print(data)
             idx = data[:5]
             indx = int(int.from_bytes(data[:5], byteorder="big"))
             try:
@@ -69,7 +62,6 @@ class selective_repeat_client:
             # send ack
             self.udp_client_socket.sendto(idx, (self.server_addr, self.port))
             if self.rcv_seq == self.sum_of_packets:
-                print("here")
                 break
             data, address = self.udp_client_socket.recvfrom(512)
 
@@ -85,5 +77,4 @@ class selective_repeat_client:
 
     def close(self):
         self.udp_client_socket.close()
-        print("success")
         return self.file_dict

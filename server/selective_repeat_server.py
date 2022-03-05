@@ -1,4 +1,5 @@
 import socket
+import sys
 import threading
 import time
 # from loges import Logger
@@ -23,9 +24,7 @@ class selective_repeat:
         self.udp_server_socket = None
 
     def run(self, bytes_data: dict):
-        print("start run")
         self._init_socket()
-        print("after init")
         self.selective_repeat(bytes_data)
         self.close()
 
@@ -38,8 +37,6 @@ class selective_repeat:
             self.udp_server_socket.settimeout(2)
             try:
                 msg, addr = self.udp_server_socket.recvfrom(5)
-                print(msg)
-                print(addr)
                 self.port = addr[1]
             except Exception as e:
                 print(e)
@@ -47,7 +44,7 @@ class selective_repeat:
 
     def selective_repeat(self, bytes_data: dict):
         last_packet_ind = 0
-        self.nextpckt = 1000000
+        self.nextpckt = sys.maxsize
         for key in bytes_data.keys():
             last_packet_ind = max(last_packet_ind, key)
             self.nextpckt = min(self.nextpckt, key)
@@ -80,7 +77,6 @@ class selective_repeat:
                 break
 
     def send_packet(self, packet_data):
-        print(packet_data)
         self.udp_server_socket.sendto(packet_data, (self.addr, self.port))
         self.expct_ack.append(self.nextpckt)
 

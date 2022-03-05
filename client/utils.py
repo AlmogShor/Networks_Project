@@ -142,14 +142,12 @@ class Handler():
 
                     # return f'file [{filename}] downloaded first part from server. Last byte is []'
                 else:# wait for GUI proceed
-                    print("hellp")
                     client.send(OpCode.PRCD)
                     resp = client.receive()
                     if resp == OpCode.RST:
                         Logger.error('file not found or server failed to read file - try again')
                         return 'file not found or server failed to read file - try again'
                     length = int(resp)
-                    print(length)
                     if length > 0:
                         receiver = selective_repeat_client(client.server_ip, client._port + 100, filename)
                         threading.Thread(target=receiver.run, args=(length,)).start()
