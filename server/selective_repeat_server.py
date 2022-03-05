@@ -1,6 +1,7 @@
 import socket
 import threading
 import time
+# from loges import Logger
 from collections import deque
 import math
 
@@ -25,7 +26,9 @@ class selective_repeat:
         self.ack_lock = threading.Lock
 
     def run(self, bytes_data: dict):
+        print("start run")
         self._init_socket()
+        print("after init")
         self.selective_repeat(bytes_data)
 
     def _init_socket(self):
@@ -36,6 +39,7 @@ class selective_repeat:
             while True:
                 try:
                     self.udp_server_socket.recvfrom(5)
+                    print("receive handshake")
                     break
                 except:
                     pass
@@ -47,6 +51,8 @@ class selective_repeat:
         last_packet_ind = self.seq + no_of_packets
         for data_idx in sorted(bytes_data.keys()):
             self.curr_download[data_idx] = data_idx.to_bytes(length=5, byteorder="big") + bytes_data[data_idx]
+        print(type(self.curr_download[1]))
+        print(self.curr_download[1])
         while True:
             try:
                 while len(self.expct_ack) < self.window_size and self.nextpckt <= last_packet_ind:

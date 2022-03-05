@@ -141,6 +141,7 @@ class Ui_MainWindow(QMainWindow):
     def connect(self):
 
         name = self.le_usename.text()
+        server_ip = self._input_dialog("connect to server","What is the server ip?")
         flag, message = self._client.connect(name)
         if flag:
             self.set_log(message)
@@ -182,9 +183,9 @@ class Ui_MainWindow(QMainWindow):
         """ take input from user for opcodes, where needed"""
         if op == OpCode.DL:
             text = self._input_dialog('File to Download', "File Name: ")
-            # stop_point = self._input_dialog("point to stop", "Enter a check point:\n (between 0-1) ")
+            stop_point = self._input_dialog("point to stop", "Enter a check point:\n (between 0-1) ")
             if text:
-                return {"filename": text}
+                return {"filename": text, "stop_point": stop_point}
 
         elif op == OpCode.CM:
             target_client = None

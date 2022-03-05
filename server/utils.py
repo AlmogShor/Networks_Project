@@ -160,13 +160,14 @@ class Handler:
             Logger.info(f"read file successfully")
             if bytes_data_dict1:
                 client.send(f'{len(bytes_data_dict1)}')
+                Logger.info(len(bytes_data_dict1))
                 resp = client.receive()
                 if resp == OpCode.SI:
                     Logger.info(f"started download")
-                    Logger.info(bytes_data_dict1[1])
+
                     user = client.ClientName
                     sender = selective_repeat(Server._self.host, client.Port + 100)
-                    threading.Thread(target=sender.run, args=bytes_data_dict1).start()
+                    threading.Thread(target=sender.run, args=(bytes_data_dict1,)).start()
                     # resp = cls.ask_client_to_proceed(client)
                     Logger.info("downloaded first part")
                     resp = client.receive()
@@ -178,11 +179,11 @@ class Handler:
                             client.send(f'{len(bytes_data_dict2)}')
                             resp = client.receive
                             if resp == OpCode.SI:
-                                threading.Thread(targert=sender.selective_repeat, args=bytes_data_dict2).start()
+                                threading.Thread(targert=sender.run, args=(bytes_data_dict2,)).start()
                         else:
                             client.send(f'{0}')
                     # cls._send_over_udp(bytes_data, client.Port + 100)
-                    sender.close()
+                    # sender.close()
                     client.send(f"all good")
                     resp = client.receive()
                     if resp == OpCode.ACK:

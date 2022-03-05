@@ -151,8 +151,8 @@ class Handler():
                     threading.Thread(target=receiver.run, args=(length,)).start()
                 bytes_data = receiver.close()
                 # bytes_data = cls._receive_over_udp(length, client.Port + 100)
-                write_file(filename, bytes_data)
                 print(bytes_data)
+                write_file(filename, bytes_data)
                 client.send(OpCode.ACK)
                 Logger.info(f'file [{filename}] downloaded from server')
                 return f'file [{filename}] downloaded from server. Last byte is []'
