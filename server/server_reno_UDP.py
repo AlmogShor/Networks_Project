@@ -129,7 +129,7 @@ class reno_server:
                 # duplicate ack
                 self.dupack += 1
                 """
-                    On the first and second duplicate ACKs received at a 
+                On the first and second duplicate ACKs received at a 
                 sender, a TCP SHOULD send a segment of previously unsent data 
                 per [RFC 3042] provided that the receiver's advertised window 
                 allows, the total Flight Size would remain less than or 

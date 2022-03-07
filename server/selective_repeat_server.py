@@ -58,6 +58,8 @@ class selective_repeat:
                     self.seq += 1
             except ConnectionError:
                 break
+            except socket.error:
+                break
 
             self.recieve_Ack()
             if not self.curr_download:
@@ -92,8 +94,8 @@ class selective_repeat:
                 test = self.expct_ack.pop(0)
                 self.curr_download.pop(test)
 
-        try:
-            self.expct_ack.index(ack_rcv)
+
+        if ack_rcv in self.expct_ack:
             while True:
                 right_seq = self.expct_ack.pop(0)
                 if ack_rcv != right_seq:
@@ -108,8 +110,6 @@ class selective_repeat:
                     else:
                         self.window_size += 2
                     return
-        except:
-            pass
 
     def close(self):
         print("closed")

@@ -54,10 +54,10 @@ class selective_repeat_client:
         while True:
             idx = data[:5]
             indx = int(int.from_bytes(data[:5], byteorder="big"))
-            try:
-                self.file_dict[indx]
-            except Exception as e:
-                print(e)
+
+            if indx in self.file_dict.keys():
+                pass
+            else:
                 self.file_dict[indx] = data[5:]
                 self.rcv_seq += 1
             # send ack
