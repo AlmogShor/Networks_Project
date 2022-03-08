@@ -178,7 +178,6 @@ class Handler:
                 elif resp == OpCode.PRCD:
                     if bytes_data_dict2:
                         client.send(f'{len(bytes_data_dict2)}')
-                        # sender = selective_repeat(Server._self.host, client.Port + 100)
                         sender = selective_repeat(Server._self.host, client.Port + 100)
                         threading.Thread(target=sender.run, args=(bytes_data_dict2,)).start()
 
