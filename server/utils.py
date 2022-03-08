@@ -444,7 +444,6 @@ class Server(safeqthreads.SafeWorker):
         self.server.listen(self.MAX_NUM_CONN)
         Logger.info(f"Listening at {self.ip}/{self.port} ")
         self.ui_signal.logger.emit(f"Listening at {self.ip}/{self.port} ")
-        # self.ui_signal.logger.emit(f"my ip is {self.ip}")
 
     def _username(self, client):
         """ receive and validate username from client"""
