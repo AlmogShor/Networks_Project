@@ -17,6 +17,9 @@ class selective_repeat:
         self.window_size = 4
         # self.window = tuple(1, 1)
         self.timeout = 4
+        self.ssthresh = 64 * 512  # 32kb  half of the maximum size of UDP
+        self.state = 0  # 0 - slow start, 1 - congestion avoidnace, 2 - fast recovery
+        self.state_cnt = 0
         # self.sum_of_packets = math.ceil(self.size_of_file / 2022)
         self.udp_server_socket = None
 
@@ -82,6 +85,8 @@ class selective_repeat:
                 self.window_size = 4
             else:
                 self.window_size = 2
+            self.state = 0
+            self.state_cnt = 0
             for key in self.expct_ack:
                 try:
                     self.udp_server_socket.sendto(self.curr_download[key], (self.addr, self.port))
@@ -94,21 +99,34 @@ class selective_repeat:
                 test = self.expct_ack.pop(0)
                 self.curr_download.pop(test)
 
-
         if ack_rcv in self.expct_ack:
+            flag = "right_seq"
             while True:
                 right_seq = self.expct_ack.pop(0)
                 if ack_rcv != right_seq:
+                    flag = "wrong_seq"
                     self.udp_server_socket.sendto(self.curr_download[right_seq], (self.addr, self.port))
                     self.expct_ack.append(right_seq)
                     if self.window_size > 2:
-                        self.window_size -= 1
+                        if self.state == 0:
+                            self.window_size -= 2
+                        elif self.state == 1:
+                            self.window_size = math.ceil(self.window_size / 2)
+                            self.state = 2
+                            self.state_cnt = 0
+                        else:
+                            self.window_size -= 2
                 else:
                     self.curr_download.pop(ack_rcv)
-                    if self.window_size < 32:
-                        self.window_size *= 2
-                    else:
-                        self.window_size += 2
+                    if flag == "right_seq":
+                        if self.window_size < 32:
+                            if self.state == 0:
+                                self.window_size *= 2
+                                self.state_cnt += 1
+                                if self.state_cnt == 4:
+                                    self.state = 1
+                            else:
+                                self.window_size += 2
                     return
 
     def close(self):
