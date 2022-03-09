@@ -184,15 +184,14 @@ class Handler:
                     else:
                         client.send(f'{0}')
                     # cls._send_over_udp(bytes_data, client.Port + 100)
-                    # sender.close()
                     client.send(f"all good")
                     resp = client.receive()
-                    # if resp == OpCode.ACK:
-                    #     Logger.info(f"requested file [{filename}] sent to [{user}]")
-                    #
-                    # else:
-                    #     Logger.error(
-                    #         f"client [{user}] failed to receive file [{filename}]")
+                    if resp == OpCode.ACK:
+                        Logger.info(f"requested file [{filename}] sent to [{client.ClientName}]")
+
+                    else:
+                        Logger.error(
+                            f"client [{client.ClientName}] failed to receive file [{filename}]")
 
                 else:
                     Logger.info(f"client not ready to receive file [{filename}]")
